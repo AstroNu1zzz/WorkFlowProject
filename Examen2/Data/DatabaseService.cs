@@ -133,6 +133,7 @@ namespace Examen2.Data
             }
         }
 
+
         // --- CÁLCULO DE PROMEDIO DE UNIDAD PARA UN ALUMNO ---
         public async Task<double> CalculateStudentUnitGradeAsync(int unitId, int userId)
         {
@@ -266,8 +267,18 @@ namespace Examen2.Data
         public async Task<bool> UpdateUserAsync(User user)
         {
             await InitAsync();
-            var response = await _client.From<User>().Update(user);
-            return response.Models.Count > 0;
+            try
+            {
+                var response = await _client.From<User>()
+                                           .Where(u => u.Id == user.Id)
+                                           .Update(user);
+                return response.Models.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al actualizar usuario: {ex.Message}");
+                return false;
+            }
         }
 
         // --- CURSOS Y MIEMBROS ---

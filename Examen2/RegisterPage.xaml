@@ -2,13 +2,13 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.RegisterPage"
-             BackgroundColor="#F8F9FA"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}"
              NavigationPage.HasNavigationBar="False">
 
     <ScrollView VerticalOptions="Center">
         <Grid HorizontalOptions="Center" Margin="0,20">
-            <Border BackgroundColor="White"
-                    Stroke="#E0E0E0"
+            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}"
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2D3748}"
                     StrokeThickness="1"
                     WidthRequest="380"
                     Padding="30">
@@ -25,31 +25,43 @@
 
                     <Label Text="Crear una cuenta"
                            FontSize="18"
-                           TextColor="#3C4043"
+                           TextColor="{AppThemeBinding Light=#3C4043, Dark=#CBD5E1}"
                            HorizontalOptions="Center" />
 
                     <!-- Nombre de usuario -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Nombre de usuario" FontSize="12" TextColor="#5F6368" />
-                        <Entry x:Name="TxtUsername" Placeholder="ej. nsepulveda" TextColor="#5F6368"/>
+                        <Label Text="Nombre de usuario (3-20 caracteres)" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtUsername" Placeholder="ej. nsepulveda" MaxLength="20" TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
                     </VerticalStackLayout>
 
                     <!-- Correo electrónico -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Correo electrónico" FontSize="12" TextColor="#5F6368" />
-                        <Entry x:Name="TxtEmail" Placeholder="ejemplo@cecyt13.ipn.mx" Keyboard="Email" TextColor="#5F6368"/>
+                        <Label Text="Correo electrónico" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtEmail" Placeholder="ejemplo@cecyt13.ipn.mx" Keyboard="Email" TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
                     </VerticalStackLayout>
 
                     <!-- Contraseña -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Contraseña" FontSize="12" TextColor="#5F6368" />
-                        <Entry x:Name="TxtPassword" IsPassword="True" Placeholder="••••••••" TextColor="#5F6368"/>
+                        <Label Text="Contraseña" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtPassword" 
+                               IsPassword="True" 
+                               Placeholder="••••••••" 
+                               TextColor="{AppThemeBinding Light=Black, Dark=White}"
+                               TextChanged="OnPasswordTextChanged" />
+
+                        <!-- SEMÁFORO DE REQUISITOS DE CONTRASEÑA -->
+                        <VerticalStackLayout Spacing="2" Margin="0,4,0,0">
+                            <Label x:Name="LblReqLength" Text="• Mínimo 8 caracteres" FontSize="11" TextColor="#EF4444" />
+                            <Label x:Name="LblReqUpper" Text="• Al menos una mayúscula" FontSize="11" TextColor="#EF4444" />
+                            <Label x:Name="LblReqNumber" Text="• Al menos un número" FontSize="11" TextColor="#EF4444" />
+                            <Label x:Name="LblReqSpecial" Text="• Al menos un carácter especial (@$!%*?&amp;#_)" FontSize="11" TextColor="#EF4444" />
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
 
                     <!-- Confirmar Contraseña -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Confirmar contraseña" FontSize="12" TextColor="#5F6368" />
-                        <Entry x:Name="TxtConfirmPassword" IsPassword="True" Placeholder="••••••••" TextColor="#5F6368"/>
+                        <Label Text="Confirmar contraseña" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtConfirmPassword" IsPassword="True" Placeholder="••••••••" TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
                     </VerticalStackLayout>
 
                     <!-- Botón Registrar -->

@@ -1,87 +1,75 @@
 using Examen2.Data;
+using Examen2.Services;
 using Examen2.ViewModels;
 
 namespace Examen2;
 
 public partial class SettingsPage : ContentPage
 {
-    private readonly DatabaseService _databaseService;
-    private readonly MainViewModel _mainViewModel;
-    private bool _isInitializing;
+    private DatabaseService _databaseService;
+    private EmailService _emailService;
+    private MainViewModel _mainViewModel;
 
-    public SettingsPage(DatabaseService databaseService = null, MainViewModel mainViewModel = null)
+    public SettingsPage(DatabaseService databaseService = null, EmailService emailService = null, MainViewModel mainViewModel = null)
     {
         InitializeComponent();
-        _databaseService = databaseService ?? Application.Current?.Handler?.MauiContext?.Services.GetService<DatabaseService>();
-        _mainViewModel = mainViewModel ?? Application.Current?.Handler?.MauiContext?.Services.GetService<MainViewModel>();
+        _databaseService = databaseService;
+        _emailService = emailService;
+        _mainViewModel = mainViewModel;
     }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
-        await LoadUserSettingsAsync();
+        EnsureServices();
+        LoadUserData();
     }
 
-    private async Task LoadUserSettingsAsync()
+    private void EnsureServices()
     {
-        if (_mainViewModel?.CurrentUser == null) return;
-
-        _isInitializing = true;
-
-        // Cargar el usuario fresco de la BD para obtener el estado actual de 2FA
-        var freshUser = await _databaseService.GetUserByIdAsync(_mainViewModel.CurrentUser.Id);
-        if (freshUser != null)
-        {
-            _mainViewModel.CurrentUser.Is2FAEnabled = freshUser.Is2FAEnabled;
-            Switch2FA.IsToggled = freshUser.Is2FAEnabled;
-        }
-
-        _isInitializing = false;
+        var services = Handler?.MauiContext?.Services ?? Application.Current?.Handler?.MauiContext?.Services;
+        _databaseService ??= services?.GetService<DatabaseService>();
+        _emailService ??= services?.GetService<EmailService>();
+        _mainViewModel ??= services?.GetService<MainViewModel>();
     }
 
-    private async void On2FAToggled(object sender, ToggledEventArgs e)
+    private void LoadUserData()
     {
-        // Ignorar el evento mientras se carga el valor inicial del Switch
-        if (_isInitializing || _mainViewModel?.CurrentUser == null) return;
-
-        bool newState = e.Value;
-
-        // Si intenta desactivar 2FA, pedir confirmación previa
-        if (!newState)
+        var user = _mainViewModel?.CurrentUser;
+        if (user != null)
         {
-            bool confirm = await DisplayAlert(
-                "Desactivar 2FA",
-                "¿Estás seguro de que deseas desactivar la verificación en dos pasos? Tu cuenta será menos segura.",
-                "Sí, desactivar",
-                "Cancelar");
+            LblUsername.Text = user.Username;
+            LblEmail.Text = user.Email;
 
-            if (!confirm)
+            if (!string.IsNullOrWhiteSpace(user.Username))
             {
-                // Revertir el Switch sin volver a disparar la lógica
-                _isInitializing = true;
-                Switch2FA.IsToggled = true;
-                _isInitializing = false;
-                return;
+                LblAvatarInitial.Text = user.Username.Substring(0, 1).ToUpper();
             }
         }
+    }
 
-        // Actualizar en la base de datos de Supabase
-        bool success = await _databaseService.Update2FAStatusAsync(_mainViewModel.CurrentUser.Id, newState);
+    private async void OnProfileTapped(object sender, EventArgs e)
+    {
+        EnsureServices();
+        // Pasar los 3 servicios en orden: DatabaseService, EmailService, MainViewModel
+        await Navigation.PushAsync(new EditProfilePage(_databaseService, _emailService, _mainViewModel));
+    }
 
-        if (success)
+    private async void OnLogoutClicked(object sender, EventArgs e)
+    {
+        bool confirm = await DisplayAlert("Cerrar Sesión", "¿Estás seguro de que deseas salir?", "Sí", "Cancelar");
+        if (confirm)
         {
-            _mainViewModel.CurrentUser.Is2FAEnabled = newState;
-            string statusMsg = newState ? "Autenticación de dos factores activada." : "Autenticación de dos factores desactivada.";
-            await DisplayAlert("Seguridad actualizada", statusMsg, "OK");
-        }
-        else
-        {
-            await DisplayAlert("Error", "No se pudo actualizar la configuración de 2FA.", "OK");
+            Preferences.Default.Remove("IsLoggedIn");
+            Preferences.Default.Remove("CurrentUserId");
+            Preferences.Default.Remove("Last2FAVerifiedAt");
 
-            // Revertir el Switch si falló la actualización
-            _isInitializing = true;
-            Switch2FA.IsToggled = !newState;
-            _isInitializing = false;
+            if (_mainViewModel != null)
+            {
+                _mainViewModel.CurrentUser = null;
+            }
+
+            Application.Current.MainPage = new NavigationPage(new LoginPage(_databaseService, _emailService, _mainViewModel));
         }
     }
 }

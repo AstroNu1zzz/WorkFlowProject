@@ -10,7 +10,8 @@ public partial class CreateContentPage : ContentPage
     private readonly DatabaseService _databaseService;
     private readonly MainViewModel _mainViewModel;
     private string _selectedFilePath;
-    private FileResult _pickedFileResult; // Guardar la referencia directa para abrir el Stream en Android/Windows
+    private FileResult _pickedFileResult;
+    private CourseUnit _autoDetectedUnit;
 
     public CreateContentPage(int courseId, string itemType, DatabaseService databaseService, MainViewModel mainViewModel)
     {
@@ -21,8 +22,51 @@ public partial class CreateContentPage : ContentPage
         _mainViewModel = mainViewModel;
 
         LblHeaderTitle.Text = $"Crear {_itemType}";
-        LayoutDueDate.IsVisible = (_itemType == "Tarea");
+        bool isTarea = (_itemType == "Tarea");
+
+        LayoutDueDate.IsVisible = isTarea;
+        LayoutCriterionPicker.IsVisible = isTarea;
         DpDueDate.MinimumDate = DateTime.Today;
+
+        _ = AutoDetectUnitAndLoadCriteriaAsync();
+    }
+
+    private async Task AutoDetectUnitAndLoadCriteriaAsync()
+    {
+        // Resuelve automáticamente la unidad vigente según la fecha actual
+        _autoDetectedUnit = await _databaseService.GetActiveUnitForCourseAsync(_courseId, DateTime.Now);
+
+        if (_autoDetectedUnit != null)
+        {
+            LblActiveUnitName.Text = $"{_autoDetectedUnit.Title} (Del {_autoDetectedUnit.StartDate:dd/MM} al {_autoDetectedUnit.EndDate:dd/MM})";
+            LblActiveUnitName.TextColor = Color.FromArgb("#5EEAD4");
+
+            // Cargar los criterios asociados a la unidad activa
+            var criteria = await _databaseService.GetUnitCriteriaAsync(_autoDetectedUnit.Id);
+            PickerCriteria.ItemsSource = criteria;
+
+            if (criteria.Any())
+            {
+                LblCriterionWarning.IsVisible = false;
+                PickerCriteria.SelectedIndex = 0;
+                PickerCriteria.IsEnabled = true;
+            }
+            else
+            {
+                LblCriterionWarning.Text = "⚠️ Esta unidad no tiene criterios de evaluación configurados aún.";
+                LblCriterionWarning.IsVisible = true;
+                PickerCriteria.ItemsSource = null;
+                PickerCriteria.IsEnabled = false;
+            }
+        }
+        else
+        {
+            LblActiveUnitName.Text = "⚠️ No hay ninguna unidad activa para la fecha actual.";
+            LblActiveUnitName.TextColor = Color.FromArgb("#EF4444");
+            LblCriterionWarning.Text = "Primero debes configurar las unidades y sus fechas en la clase.";
+            LblCriterionWarning.IsVisible = true;
+            PickerCriteria.IsEnabled = false;
+        }
     }
 
     private async void OnPickFileClicked(object sender, EventArgs e)
@@ -66,6 +110,23 @@ public partial class CreateContentPage : ContentPage
             return;
         }
 
+        var selectedCriterion = PickerCriteria.SelectedItem as UnitEvaluationCriterion;
+
+        if (_itemType == "Tarea")
+        {
+            if (_autoDetectedUnit == null)
+            {
+                await DisplayAlert("Sin Unidad Activa", "No se puede publicar la tarea porque la fecha actual no coincide con ningún periodo de evaluación.", "OK");
+                return;
+            }
+
+            if (selectedCriterion == null)
+            {
+                await DisplayAlert("Criterio Requerido", "Debes seleccionar un Criterio de Evaluación (ej. Examen, Tareas).", "OK");
+                return;
+            }
+        }
+
         DateTime? dueDate = null;
         if (_itemType == "Tarea")
         {
@@ -74,9 +135,10 @@ public partial class CreateContentPage : ContentPage
             dueDate = fechaBase.Date.Add(horaSeleccionada);
         }
 
+        BtnPublish.IsEnabled = false;
+
         string attachedFilePublicUrl = null;
 
-        // Subir archivo a Supabase Storage si se seleccionó uno
         if (_pickedFileResult != null || !string.IsNullOrEmpty(_selectedFilePath))
         {
             try
@@ -102,6 +164,7 @@ public partial class CreateContentPage : ContentPage
 
                     if (!string.IsNullOrEmpty(errorMessage) || string.IsNullOrEmpty(publicUrl))
                     {
+                        BtnPublish.IsEnabled = true;
                         await DisplayAlert("Error de carga", $"No se pudo subir el archivo adjunto: {errorMessage}", "OK");
                         return;
                     }
@@ -111,6 +174,7 @@ public partial class CreateContentPage : ContentPage
             }
             catch (Exception ex)
             {
+                BtnPublish.IsEnabled = true;
                 await DisplayAlert("Error", $"Ocurrió un error al procesar el archivo: {ex.Message}", "OK");
                 return;
             }
@@ -123,11 +187,14 @@ public partial class CreateContentPage : ContentPage
             Title = title,
             Description = description,
             DueDate = dueDate,
+            UnitId = _autoDetectedUnit?.Id,
+            CriterionId = selectedCriterion?.Id,
             AuthorName = _mainViewModel.CurrentUser?.Username ?? "Profesor",
-            AttachedFilePath = attachedFilePublicUrl // Guardo la URL pública https://... de Supabase
+            AttachedFilePath = attachedFilePublicUrl
         };
 
         bool success = await _databaseService.AddClassContentItemAsync(newItem);
+        BtnPublish.IsEnabled = true;
 
         if (success)
         {

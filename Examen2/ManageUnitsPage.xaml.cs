@@ -40,12 +40,33 @@ public partial class ManageUnitsPage : ContentPage
         DateTime rawStart = DpStart.Date ?? DateTime.Now;
         DateTime rawEnd = DpEnd.Date ?? DateTime.Now.AddDays(30);
 
+        DateTime startDate = rawStart.Date.AddHours(12);
+        DateTime endDate = rawEnd.Date.AddHours(12);
+
+        if (endDate < startDate)
+        {
+            await DisplayAlert("Error", "La fecha fin debe ser posterior a la fecha de inicio.", "OK");
+            return;
+        }
+
+        // VALIDACIÓN DE TRASLAPE: Verificar si el rango [startDate, endDate] se encima con alguna unidad existente
+        var existingUnits = await _databaseService.GetCourseUnitsAsync(_courseId);
+        var overlappingUnit = existingUnits.FirstOrDefault(u => startDate.Date <= u.EndDate.Date && endDate.Date >= u.StartDate.Date);
+
+        if (overlappingUnit != null)
+        {
+            await DisplayAlert("Rango Inválido",
+                $"Las fechas ingresadas se enciman con la unidad '{overlappingUnit.Title}' ({overlappingUnit.StartDate:dd/MM/yyyy} al {overlappingUnit.EndDate:dd/MM/yyyy}). Ajusta las fechas.",
+                "OK");
+            return;
+        }
+
         var newUnit = new CourseUnit
         {
             CourseId = _courseId,
             Title = title,
-            StartDate = rawStart.Date.AddHours(12),
-            EndDate = rawEnd.Date.AddHours(12)
+            StartDate = startDate,
+            EndDate = endDate
         };
 
         bool ok = await _databaseService.AddCourseUnitAsync(newUnit);
@@ -53,6 +74,10 @@ public partial class ManageUnitsPage : ContentPage
         {
             TxtUnitTitle.Text = string.Empty;
             await LoadUnitsAsync();
+        }
+        else
+        {
+            await DisplayAlert("Error", "No se pudo guardar la unidad.", "OK");
         }
     }
 

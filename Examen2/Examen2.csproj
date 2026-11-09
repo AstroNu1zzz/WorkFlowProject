@@ -90,6 +90,9 @@
 	  <MauiXaml Update="CreateContentPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
+	  <MauiXaml Update="EditProfilePage.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
 	  <MauiXaml Update="GradeSubmissionPage.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>

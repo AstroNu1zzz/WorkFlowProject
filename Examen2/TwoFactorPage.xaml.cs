@@ -1,7 +1,6 @@
 using Examen2.Data;
 using Examen2.ViewModels;
 using User = Examen2.Data.User;
-using static System.Runtime.CompilerServices.RuntimeHelpers;
 
 namespace Examen2;
 
@@ -11,14 +10,21 @@ public partial class TwoFactorPage : ContentPage
     private readonly string _expectedCode;
     private readonly DatabaseService _databaseService;
     private readonly MainViewModel _mainViewModel;
+    private readonly Func<Task> _onSuccessCallback;
 
-    public TwoFactorPage(User user, string verificationCode, DatabaseService databaseService, MainViewModel mainViewModel)
+    public TwoFactorPage(
+        User user,
+        string verificationCode,
+        DatabaseService databaseService,
+        MainViewModel mainViewModel,
+        Func<Task> onSuccessCallback = null)
     {
         InitializeComponent();
         _user = user;
         _expectedCode = verificationCode;
         _databaseService = databaseService;
         _mainViewModel = mainViewModel;
+        _onSuccessCallback = onSuccessCallback;
     }
 
     private async void OnVerifyClicked(object sender, EventArgs e)
@@ -30,7 +36,18 @@ public partial class TwoFactorPage : ContentPage
             Preferences.Default.Set("Last2FAVerifiedAt", DateTime.UtcNow);
 
             _mainViewModel.CurrentUser = _user;
-            await Navigation.PushAsync(new MainPage(_databaseService, _mainViewModel));
+
+            // Si proviene de un flujo específico (ej. Cambiar contraseña / Verificar correo)
+            if (_onSuccessCallback != null)
+            {
+                await Navigation.PopAsync(); // Cierra TwoFactorPage
+                await _onSuccessCallback.Invoke(); // Ejecuta la acción pendiente
+            }
+            else
+            {
+                // Flujo normal de Inicio de Sesión
+                await Navigation.PushAsync(new MainPage(_databaseService, _mainViewModel));
+            }
         }
         else
         {

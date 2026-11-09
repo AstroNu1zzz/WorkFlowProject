@@ -383,12 +383,12 @@ namespace Examen2.ViewModels
         private async void OnNavigateSettings()
         {
             IsDrawerVisible = false;
-            IsProfileMenuVisible = false; // Cerrar el menú desplegable al hacer clic
+            IsProfileMenuVisible = false;
 
             if (Application.Current?.MainPage != null)
             {
                 var settingsPage = Application.Current?.Handler?.MauiContext?.Services.GetService<SettingsPage>()
-                                    ?? new SettingsPage(_databaseService, this);
+                                  ?? new SettingsPage(_databaseService, mainViewModel: this);
 
                 await Application.Current.MainPage.Navigation.PushAsync(settingsPage);
             }

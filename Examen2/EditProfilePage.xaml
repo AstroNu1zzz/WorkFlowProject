@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Examen2.EditProfilePage"
+             Title="Editar Perfil"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="20" MaximumWidthRequest="500" HorizontalOptions="Center">
+
+            <!-- MODIFICAR NOMBRE DE USUARIO -->
+            <Border Padding="18"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="👤 Nombre de usuario" FontAttributes="Bold" FontSize="15" TextColor="#5EEAD4" />
+
+                    <Entry x:Name="TxtUsername"
+                           Placeholder="Nombre de usuario"
+                           MaxLength="20"
+                           TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+
+                    <Button Text="Guardar Nombre"
+                            BackgroundColor="#5EEAD4"
+                            TextColor="#0F172A"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            Clicked="OnUpdateUsernameClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- GESTIÓN DE CORREO ELECTRÓNICO -->
+            <Border Padding="18"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                <VerticalStackLayout Spacing="12">
+                    <Grid ColumnDefinitions="*, Auto">
+                        <Label Text="✉️ Correo Electrónico" FontAttributes="Bold" FontSize="15" TextColor="#5EEAD4" />
+                        <Label x:Name="LblEmailVerifiedStatus"
+                               Grid.Column="1"
+                               Text="Sin verificar"
+                               FontSize="11"
+                               FontAttributes="Bold"
+                               TextColor="#F87171"
+                               VerticalOptions="Center" />
+                    </Grid>
+
+                    <Label x:Name="LblCurrentEmail"
+                           FontSize="14"
+                           TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
+                        <Button Grid.Column="0"
+                                Text="Verificar Correo"
+                                BackgroundColor="Transparent"
+                                BorderColor="#5EEAD4"
+                                BorderWidth="1"
+                                TextColor="#5EEAD4"
+                                FontSize="12"
+                                CornerRadius="8"
+                                Clicked="OnVerifyEmailClicked" />
+
+                        <Button Grid.Column="1"
+                                Text="Cambiar Correo"
+                                BackgroundColor="#5EEAD4"
+                                TextColor="#0F172A"
+                                FontAttributes="Bold"
+                                FontSize="12"
+                                CornerRadius="8"
+                                Clicked="OnChangeEmailClicked" />
+                    </Grid>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- SEGURIDAD Y CAMBIO DE CONTRASEÑA VÍA 2FA -->
+            <Border Padding="18"
+                    StrokeThickness="1"
+                    Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                    StrokeShape="RoundRectangle 16"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                <VerticalStackLayout Spacing="12">
+                    <Label Text="🔐 Seguridad y Contraseña" FontAttributes="Bold" FontSize="15" TextColor="#5EEAD4" />
+                    <Label Text="Para cambiar tu contraseña requerirás ingresar un código de autenticación de dos pasos (2FA)."
+                           FontSize="12"
+                           TextColor="#64748B" />
+
+                    <Button Text="Cambiar Contraseña con 2FA"
+                            BackgroundColor="#1A73E8"
+                            TextColor="White"
+                            FontAttributes="Bold"
+                            CornerRadius="8"
+                            Clicked="OnChangePassword2FAClicked" />
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

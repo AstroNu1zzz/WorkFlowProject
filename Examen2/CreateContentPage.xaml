@@ -2,55 +2,101 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.CreateContentPage"
-             BackgroundColor="#F8F9FA">
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
     <ScrollView Padding="20">
-        <VerticalStackLayout Spacing="16" HorizontalOptions="Center" MaximumWidthRequest="400">
+        <VerticalStackLayout Spacing="16" HorizontalOptions="Center" MaximumWidthRequest="420">
             <Label x:Name="LblHeaderTitle" Text="Publicar en la clase" FontSize="22" FontAttributes="Bold" TextColor="#1A73E8" />
 
-            <Border BackgroundColor="White" Stroke="#E0E0E0" StrokeThickness="1" Padding="16">
+            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}" 
+                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2D3748}" 
+                    StrokeThickness="1" 
+                    Padding="16">
                 <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="10" />
+                    <RoundRectangle CornerRadius="12" />
                 </Border.StrokeShape>
 
                 <VerticalStackLayout Spacing="14">
+
+                    <!-- Título -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Título / Asunto" FontSize="12" TextColor="#5F6368" />
-                        <Entry x:Name="TxtTitle" Placeholder="ej. Tarea 1: Ejercicios de derivadas" TextColor="Black"/>
+                        <Label Text="Título / Asunto" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtTitle" Placeholder="ej. Tarea 1: Ejercicios de derivadas" TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
                     </VerticalStackLayout>
 
+                    <!-- Instrucciones -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Instrucciones o contenido" FontSize="12" TextColor="#5F6368" />
-                        <Editor x:Name="TxtDescription" Placeholder="Escribe aquí los detalles..." HeightRequest="100" TextColor="Black"/>
+                        <Label Text="Instrucciones o contenido" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                        <Editor x:Name="TxtDescription" Placeholder="Escribe aquí los detalles..." HeightRequest="100" TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
                     </VerticalStackLayout>
 
-                    <!-- Fecha y Hora de Entrega (Solo Tarea) -->
+                    <!-- SECCIÓN: UNIDAD AUTOMÁTICA Y CRITERIO -->
+                    <Border x:Name="BorderEvaluationSection"
+                            Padding="12"
+                            StrokeThickness="1"
+                            Stroke="#5EEAD4"
+                            StrokeShape="RoundRectangle 10"
+                            BackgroundColor="{AppThemeBinding Light=#F0FDFA, Dark=#181D23}">
+                        <VerticalStackLayout Spacing="10">
+                            <Label Text="🏷️ Evaluación y Clasificación" 
+                                   FontAttributes="Bold" 
+                                   FontSize="13" 
+                                   TextColor="#5EEAD4" />
+
+                            <!-- UNIDAD DETECTADA POR FECHA -->
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Unidad / Parcial (Asignado automáticamente):" FontSize="11" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                                <Label x:Name="LblActiveUnitName"
+                                       Text="Buscando unidad activa..."
+                                       FontSize="14"
+                                       FontAttributes="Bold"
+                                       TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                            </VerticalStackLayout>
+
+                            <!-- Selector de Criterio (Solo Tareas) -->
+                            <VerticalStackLayout x:Name="LayoutCriterionPicker" Spacing="4">
+                                <Label Text="Criterio de evaluación:" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
+                                <Picker x:Name="PickerCriteria"
+                                        Title="Selecciona el criterio (ej. Examen, Tareas)"
+                                        ItemDisplayBinding="{Binding Name}"
+                                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
+                                <Label x:Name="LblCriterionWarning"
+                                       Text="⚠️ Esta unidad no tiene criterios de evaluación registrados."
+                                       FontSize="11"
+                                       TextColor="#EF4444"
+                                       IsVisible="False" />
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <!-- Fecha y Hora de Entrega -->
                     <VerticalStackLayout x:Name="LayoutDueDate" Spacing="4" IsVisible="False">
-                        <Label Text="Fecha y hora de entrega" FontSize="12" TextColor="#5F6368" />
+                        <Label Text="Fecha y hora de entrega" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
                         <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
                             <DatePicker Grid.Column="0" 
-                    x:Name="DpDueDate" 
-                    Format="dd/MM/yyyy" 
-                    TextColor="Black" />
+                                        x:Name="DpDueDate" 
+                                        Format="dd/MM/yyyy" 
+                                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
 
                             <TimePicker Grid.Column="1" 
-                    x:Name="TpDueTime" 
-                    Format="HH:mm" 
-                    Time="23:59:00" 
-                    TextColor="Black" />
+                                        x:Name="TpDueTime" 
+                                        Format="HH:mm" 
+                                        Time="23:59:00" 
+                                        TextColor="{AppThemeBinding Light=Black, Dark=White}" />
                         </Grid>
                     </VerticalStackLayout>
 
-                    <!-- Archivo Adjunto (PDF o Imagen) -->
+                    <!-- Archivo Adjunto -->
                     <VerticalStackLayout Spacing="4">
-                        <Label Text="Archivo adjunto (Opcional)" FontSize="12" TextColor="#5F6368" />
+                        <Label Text="Archivo adjunto (Opcional)" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
                         <Button Text="📎 Adjuntar Imagen o PDF" Clicked="OnPickFileClicked" BackgroundColor="#E8F0FE" TextColor="#1967D2" HeightRequest="40" Padding="10,0" />
                         <Label x:Name="LblAttachedFileName" FontSize="11" TextColor="#1E8E3E" FontAttributes="Italic" IsVisible="False" />
                     </VerticalStackLayout>
 
+                    <!-- Botones -->
                     <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,10,0,0">
                         <Button Grid.Column="0" Text="Cancelar" Clicked="OnCancelClicked" BackgroundColor="Transparent" TextColor="#5F6368" />
-                        <Button Grid.Column="1" Text="Publicar" Clicked="OnPublishClicked" BackgroundColor="#1A73E8" TextColor="White" CornerRadius="6" />
+                        <Button x:Name="BtnPublish" Grid.Column="1" Text="Publicar" Clicked="OnPublishClicked" BackgroundColor="#1A73E8" TextColor="White" CornerRadius="6" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>

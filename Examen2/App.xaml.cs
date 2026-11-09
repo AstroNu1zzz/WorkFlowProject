@@ -22,10 +22,10 @@ public partial class App : Application
         _emailService = emailService;
         _mainViewModel = mainViewModel;
 
-        // 1. Asignación inmediata para evitar que Android suspenda la app en el Splash Screen
+        // 1. Asignación inicial para evitar bloqueos en Android
         MainPage = new NavigationPage(new LoginPage(_databaseService, _emailService, _mainViewModel));
 
-        // 2. Verificación asíncrona sin bloqueos síncronos (.GetAwaiter().GetResult())
+        // 2. Verificación asíncrona de sesión activa
         CheckSessionAsync();
     }
 
@@ -37,18 +37,18 @@ public partial class App : Application
             int userId = Preferences.Default.Get("CurrentUserId", -1);
             DateTime last2FA = Preferences.Default.Get("Last2FAVerifiedAt", DateTime.MinValue);
 
-            bool is2FAExpired = (DateTime.UtcNow - last2FA).TotalDays > 30;
+            // CORRECCIÓN: Solo se considera expirado si se registró una fecha previa y pasaron más de 30 días
+            bool is2FAExpired = last2FA != DateTime.MinValue && (DateTime.UtcNow - last2FA).TotalDays > 30;
 
             if (isLoggedIn && userId != -1 && !is2FAExpired)
             {
-                // Consulta asíncrona real a SQLite sin congelar la UI
                 var user = await _databaseService.GetUserByIdAsync(userId);
 
                 if (user != null)
                 {
                     _mainViewModel.CurrentUser = user;
 
-                    // Redirección en el hilo principal una vez confirmada la sesión
+                    // Redirección a la pantalla principal en el hilo de interfaz de usuario
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
                         MainPage = new NavigationPage(new MainPage(_databaseService, _mainViewModel));

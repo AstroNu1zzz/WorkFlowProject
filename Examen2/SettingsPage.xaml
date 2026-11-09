@@ -2,174 +2,175 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.SettingsPage"
-             Title="Ajustes"
+             Title="Configuración"
              BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
     <ScrollView Padding="20">
-        <VerticalStackLayout Spacing="22" MaximumWidthRequest="600">
+        <VerticalStackLayout Spacing="20" MaximumWidthRequest="600" HorizontalOptions="Center">
 
-            <!-- TÍTULO DE LA PÁGINA -->
-            <Label Text="Configuración" 
-                   FontSize="26" 
-                   FontAttributes="Bold" 
-                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" 
-                   Margin="4,0" />
+            <!-- ENCABEZADO -->
+            <Label Text="Configuración"
+                   FontSize="24"
+                   FontAttributes="Bold"
+                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
 
-            <!-- SECCIÓN 1: PERFIL DE USUARIO -->
+            <!-- SECCIÓN 1: PERFIL DE USUARIO (CLICABLE) -->
             <VerticalStackLayout Spacing="8">
-                <Label Text="PERFIL" 
-                       FontSize="12" 
-                       FontAttributes="Bold" 
-                       TextColor="#5EEAD4" 
-                       Margin="4,0" />
+                <Label Text="PERFIL"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="#5EEAD4" />
 
-                <Border StrokeThickness="1"
+                <Border Padding="16"
+                        StrokeThickness="1"
                         Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
                         StrokeShape="RoundRectangle 16"
-                        Padding="16"
                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                    <Border.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnProfileTapped" />
+                    </Border.GestureRecognizers>
 
                     <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" VerticalOptions="Center">
-                        <!-- Inicial / Foto de Perfil -->
+                        <!-- AVATAR CON INICIAL DE USUARIO -->
                         <Border Grid.Column="0"
                                 WidthRequest="48"
                                 HeightRequest="48"
                                 StrokeShape="RoundRectangle 24"
-                                StrokeThickness="1.5"
-                                Stroke="#5EEAD4"
-                                BackgroundColor="#1E2B3C">
-                            <Label Text="{Binding CurrentUser.Username[0]}"
-                                   TextColor="White"
-                                   FontAttributes="Bold"
+                                StrokeThickness="0"
+                                BackgroundColor="#5EEAD4">
+                            <Label x:Name="LblAvatarInitial"
+                                   Text="U"
                                    FontSize="20"
+                                   FontAttributes="Bold"
+                                   TextColor="#0F172A"
                                    HorizontalOptions="Center"
                                    VerticalOptions="Center" />
                         </Border>
 
-                        <!-- Datos del usuario -->
+                        <!-- DATOS REALES DE USUARIO -->
                         <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
-                            <Label Text="{Binding CurrentUser.Username, FallbackValue='Usuario'}" 
-                                   FontAttributes="Bold" 
-                                   FontSize="16" 
+                            <Label x:Name="LblUsername"
+                                   Text="Cargando..."
+                                   FontSize="16"
+                                   FontAttributes="Bold"
                                    TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                            <Label Text="{Binding CurrentUser.Email, FallbackValue='correo@ejemplo.com'}" 
-                                   FontSize="12" 
+                            <Label x:Name="LblEmail"
+                                   Text="cargando@correo.com"
+                                   FontSize="13"
                                    TextColor="#64748B" />
                         </VerticalStackLayout>
+
+                        <!-- FLECHA FLECHA DE NAVEGACIÓN -->
+                        <Label Grid.Column="2"
+                               Text="❯"
+                               FontSize="18"
+                               TextColor="#5EEAD4"
+                               VerticalOptions="Center" />
                     </Grid>
                 </Border>
             </VerticalStackLayout>
 
             <!-- SECCIÓN 2: SEGURIDAD Y ACCESO -->
             <VerticalStackLayout Spacing="8">
-                <Label Text="SEGURIDAD Y ACCESO" 
-                       FontSize="12" 
-                       FontAttributes="Bold" 
-                       TextColor="#5EEAD4" 
-                       Margin="4,0" />
+                <Label Text="SEGURIDAD Y ACCESO"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="#5EEAD4" />
 
-                <Border StrokeThickness="1"
+                <Border Padding="16"
+                        StrokeThickness="1"
                         Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
                         StrokeShape="RoundRectangle 16"
-                        Padding="16"
                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Verificación de dos pasos (2FA)"
+                                   FontAttributes="Bold"
+                                   FontSize="14"
+                                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                            <Label Text="Solicitar un código de verificación al cambiar contraseña o iniciar sesión."
+                                   FontSize="12"
+                                   TextColor="#64748B" />
+                        </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="16">
-
-                        <!-- OPTION 2FA -->
-                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                                <Label Text="Verificación de dos pasos (2FA)"
-                                       FontSize="15"
-                                       FontAttributes="Bold"
-                                       TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                                <Label Text="Solicitar un código de verificación al iniciar sesión."
-                                       FontSize="12"
-                                       TextColor="#64748B" />
-                            </VerticalStackLayout>
-
-                            <Switch x:Name="Switch2FA"
-                                    Grid.Column="1"
-                                    OnColor="#5EEAD4"
-                                    ThumbColor="White"
-                                    VerticalOptions="Center"
-                                    Toggled="On2FAToggled" />
-                        </Grid>
-
-                    </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                x:Name="Switch2FA"
+                                IsToggled="True"
+                                OnColor="#5EEAD4" />
+                    </Grid>
                 </Border>
             </VerticalStackLayout>
 
             <!-- SECCIÓN 3: PREFERENCIAS -->
             <VerticalStackLayout Spacing="8">
-                <Label Text="PREFERENCIAS" 
-                       FontSize="12" 
-                       FontAttributes="Bold" 
-                       TextColor="#5EEAD4" 
-                       Margin="4,0" />
+                <Label Text="PREFERENCIAS"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="#5EEAD4" />
 
-                <Border StrokeThickness="1"
+                <Border Padding="16"
+                        StrokeThickness="1"
                         Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
                         StrokeShape="RoundRectangle 16"
-                        Padding="16"
                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Notificaciones por correo"
+                                   FontAttributes="Bold"
+                                   FontSize="14"
+                                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                            <Label Text="Recibir avisos sobre nuevas entregas y publicaciones."
+                                   FontSize="12"
+                                   TextColor="#64748B" />
+                        </VerticalStackLayout>
 
-                    <VerticalStackLayout Spacing="16">
-
-                        <!-- NOTIFICACIONES POR CORREO -->
-                        <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
-                            <VerticalStackLayout Grid.Column="0" Spacing="2" VerticalOptions="Center">
-                                <Label Text="Notificaciones por correo"
-                                       FontSize="15"
-                                       FontAttributes="Bold"
-                                       TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                                <Label Text="Recibir correos sobre entregas y publicaciones."
-                                       FontSize="12"
-                                       TextColor="#64748B" />
-                            </VerticalStackLayout>
-
-                            <Switch Grid.Column="1"
-                                    IsToggled="True"
-                                    OnColor="#5EEAD4"
-                                    ThumbColor="White"
-                                    VerticalOptions="Center" />
-                        </Grid>
-
-                    </VerticalStackLayout>
+                        <Switch Grid.Column="1"
+                                IsToggled="True"
+                                OnColor="#5EEAD4" />
+                    </Grid>
                 </Border>
             </VerticalStackLayout>
 
-            <!-- SECCIÓN 4: ACERCA DE LA APLICACIÓN -->
+            <!-- SECCIÓN 4: INFORMACIÓN DE LA APP -->
             <VerticalStackLayout Spacing="8">
-                <Label Text="INFORMACIÓN" 
-                       FontSize="12" 
-                       FontAttributes="Bold" 
-                       TextColor="#5EEAD4" 
-                       Margin="4,0" />
+                <Label Text="INFORMACIÓN"
+                       FontSize="12"
+                       FontAttributes="Bold"
+                       TextColor="#5EEAD4" />
 
-                <Border StrokeThickness="1"
+                <Border Padding="16"
+                        StrokeThickness="1"
                         Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
                         StrokeShape="RoundRectangle 16"
-                        Padding="16"
                         BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-
-                    <Grid ColumnDefinitions="*, Auto">
-                        <VerticalStackLayout Grid.Column="0" Spacing="2">
-                            <Label Text="WorkFlow para MAUI" 
-                                   FontAttributes="Bold" 
-                                   FontSize="14" 
+                    <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="WorkFlow para MAUI"
+                                   FontAttributes="Bold"
+                                   FontSize="14"
                                    TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                            <Label Text="Versión 1.0.0 (Supabase Cloud)" 
-                                   FontSize="12" 
+                            <Label Text="Versión 1.0.0 (Supabase Cloud)"
+                                   FontSize="12"
                                    TextColor="#64748B" />
                         </VerticalStackLayout>
-                        <Label Grid.Column="1" 
-                               Text="⚡" 
-                               FontSize="20" 
+
+                        <Label Grid.Column="1"
+                               Text="⚡"
+                               FontSize="22"
                                VerticalOptions="Center" />
                     </Grid>
                 </Border>
             </VerticalStackLayout>
+
+            <!-- BOTÓN CERRAR SESIÓN -->
+            <Button Text="Cerrar Sesión"
+                    BackgroundColor="#EF4444"
+                    TextColor="White"
+                    FontAttributes="Bold"
+                    CornerRadius="10"
+                    HeightRequest="46"
+                    Margin="0,10,0,0"
+                    Clicked="OnLogoutClicked" />
 
         </VerticalStackLayout>
     </ScrollView>

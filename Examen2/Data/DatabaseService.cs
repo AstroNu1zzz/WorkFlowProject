@@ -103,6 +103,74 @@ namespace Examen2.Data
             }
         }
 
+        public async Task<List<UnitEvaluationCriterion>> GetUnitCriteriaAsync(int unitId)
+        {
+            await InitAsync();
+            var response = await _client.From<UnitEvaluationCriterion>()
+                                       .Where(c => c.UnitId == unitId)
+                                       .Get();
+            return response.Models;
+        }
+
+        public async Task<bool> AddUnitCriterionAsync(UnitEvaluationCriterion criterion)
+        {
+            await InitAsync();
+            var response = await _client.From<UnitEvaluationCriterion>().Insert(criterion);
+            return response.Models.Count > 0;
+        }
+
+        public async Task<bool> DeleteUnitCriterionAsync(int criterionId)
+        {
+            await InitAsync();
+            try
+            {
+                await _client.From<UnitEvaluationCriterion>().Where(c => c.Id == criterionId).Delete();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // --- CÁLCULO DE PROMEDIO DE UNIDAD PARA UN ALUMNO ---
+        public async Task<double> CalculateStudentUnitGradeAsync(int unitId, int userId)
+        {
+            await InitAsync();
+            var criteria = await GetUnitCriteriaAsync(unitId);
+            if (!criteria.Any()) return 0;
+
+            // Obtener tareas pertenecientes a la unidad
+            var unitItems = await _client.From<ClassContentItem>()
+                                         .Where(i => i.UnitId == unitId && i.ItemType == "Tarea")
+                                         .Get();
+
+            double finalGrade = 0;
+
+            foreach (var criterion in criteria)
+            {
+                var criterionTaskIds = unitItems.Models.Where(i => i.CriterionId == criterion.Id).Select(i => i.Id).ToList();
+
+                if (!criterionTaskIds.Any()) continue;
+
+                // Obtener entregas calificadas del alumno para esas tareas
+                var submissions = await _client.From<TaskSubmission>()
+                                               .Where(s => s.UserId == userId)
+                                               .Get();
+
+                var gradedSubmissions = submissions.Models.Where(s => criterionTaskIds.Contains(s.ContentItemId) && s.Grade.HasValue).ToList();
+
+                if (gradedSubmissions.Any())
+                {
+                    double criterionAverage = gradedSubmissions.Average(s => s.Grade.Value);
+                    // Ponderar sobre el 100% del criterio
+                    finalGrade += (criterionAverage * (criterion.Percentage / 100.0));
+                }
+            }
+
+            return Math.Round(finalGrade, 2);
+        }
+
         public async Task<string> GetUserRoleInCourseAsync(int courseId, int userId)
         {
             await InitAsync();

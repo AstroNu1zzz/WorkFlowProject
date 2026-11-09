@@ -91,6 +91,9 @@ namespace Examen2.Data
         [Column("unit_id")]
         public int? UnitId { get; set; }
 
+        [Column("criterion_id")]
+        public int? CriterionId { get; set; }
+
         [Column("item_type")]
         public string ItemType { get; set; }
 
@@ -162,5 +165,20 @@ namespace Examen2.Data
 
         [Column("end_date")]
         public DateTime EndDate { get; set; }
+    }
+    [Table("unit_evaluation_criteria")]
+    public class UnitEvaluationCriterion : BaseModel
+    {
+        [PrimaryKey("id", false)]
+        public int Id { get; set; }
+
+        [Column("unit_id")]
+        public int UnitId { get; set; }
+
+        [Column("name")]
+        public string Name { get; set; }
+
+        [Column("percentage")]
+        public double Percentage { get; set; }
     }
 }

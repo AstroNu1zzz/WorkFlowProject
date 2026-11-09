@@ -2,53 +2,84 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.ManageUnitsPage"
-             Title="Configurar Unidades"
+             Title="Configurar Unidades y Criterios"
              BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
     <ScrollView Padding="20">
-        <VerticalStackLayout Spacing="18" MaximumWidthRequest="500">
-            <Label Text="Organización del Curso" FontSize="20" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-            <Label Text="Define los periodos o unidades de evaluación con sus fechas límite." FontSize="13" TextColor="#64748B" />
+        <VerticalStackLayout Spacing="18" MaximumWidthRequest="650">
 
-            <!-- FORMULARIO CREAR UNIDAD -->
+            <Label Text="Organización del Curso" FontSize="20" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+
+            <!-- FORMULARIO NUEVA UNIDAD -->
             <Border Padding="16" StrokeShape="RoundRectangle 14" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
                 <VerticalStackLayout Spacing="12">
-                    <Entry x:Name="TxtUnitTitle" Placeholder="Nombre (ej. Unidad 1: Fundamentos)" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-
+                    <Label Text="Crear Nueva Unidad" FontAttributes="Bold" FontSize="14" TextColor="#5EEAD4" />
+                    <Entry x:Name="TxtUnitTitle" Placeholder="Nombre de la unidad (ej. Parcial 1)" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                     <Grid ColumnDefinitions="*, *" ColumnSpacing="10">
                         <VerticalStackLayout Grid.Column="0" Spacing="4">
-                            <Label Text="Fecha Inicio:" FontSize="12" TextColor="#64748B" />
+                            <Label Text="Inicio:" FontSize="12" TextColor="#64748B" />
                             <DatePicker x:Name="DpStart" Format="dd/MM/yyyy" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                         </VerticalStackLayout>
                         <VerticalStackLayout Grid.Column="1" Spacing="4">
-                            <Label Text="Fecha Fin:" FontSize="12" TextColor="#64748B" />
+                            <Label Text="Fin:" FontSize="12" TextColor="#64748B" />
                             <DatePicker x:Name="DpEnd" Format="dd/MM/yyyy" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                         </VerticalStackLayout>
                     </Grid>
-
-                    <Button Text="+ Agregar Unidad" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" Clicked="OnAddUnitClicked" />
+                    <Button Text="+ Registrar Unidad" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" Clicked="OnAddUnitClicked" />
                 </VerticalStackLayout>
             </Border>
 
-            <!-- LISTA DE UNIDADES REGISTRADAS -->
-            <Label Text="Unidades Registradas" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" Margin="0,10,0,0" />
+            <!-- SECCIÓN CONFIGURACIÓN DE CRITERIOS DE LA UNIDAD SELECCIONADA -->
+            <Border x:Name="BorderCriteriaPanel" IsVisible="False" Padding="16" StrokeShape="RoundRectangle 14" Stroke="#5EEAD4" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                <VerticalStackLayout Spacing="12">
+                    <Label x:Name="LblSelectedUnitTitle" FontAttributes="Bold" FontSize="16" TextColor="#5EEAD4" />
+                    <Label x:Name="LblTotalPercentage" Text="Total Criterios: 0% / 100%" FontSize="13" FontAttributes="Bold" TextColor="#F87171" />
 
+                    <Grid ColumnDefinitions="*, 100, Auto" ColumnSpacing="8">
+                        <Entry x:Name="TxtCriterionName" Placeholder="Criterio (ej. Examen)" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                        <Entry Grid.Column="1" x:Name="TxtCriterionPercentage" Placeholder="Valor %" Keyboard="Numeric" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                        <Button Grid.Column="2" Text="Añadir" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" Clicked="OnAddCriterionClicked" />
+                    </Grid>
+
+                    <CollectionView x:Name="CvCriteria" SelectionMode="None">
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border Margin="0,3" Padding="10" StrokeShape="RoundRectangle 8" BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#181D23}">
+                                    <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="10">
+                                        <Label Text="{Binding Name}" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" VerticalOptions="Center" />
+                                        <Label Grid.Column="1" Text="{Binding Percentage, StringFormat='{0}%'}" FontAttributes="Bold" TextColor="#5EEAD4" VerticalOptions="Center" />
+                                        <Button Grid.Column="2" Text="🗑️" BackgroundColor="Transparent" Clicked="OnDeleteCriterionClicked" CommandParameter="{Binding .}" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="Selecciona una unidad para administrar sus criterios:" FontSize="14" TextColor="#64748B" />
+
+            <!-- LISTA DE UNIDADES -->
             <CollectionView x:Name="CvUnits" SelectionMode="None">
                 <CollectionView.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="0,4" Padding="14" StrokeShape="RoundRectangle 12" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnUnitSelectedTapped" />
+                            </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="*, Auto">
-                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                <VerticalStackLayout Spacing="2">
                                     <Label Text="{Binding Title}" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                                     <Label Text="{Binding StartDate, StringFormat='Del {0:dd/MM/yyyy}'}" FontSize="12" TextColor="#64748B" />
                                     <Label Text="{Binding EndDate, StringFormat='Al {0:dd/MM/yyyy}'}" FontSize="12" TextColor="#64748B" />
                                 </VerticalStackLayout>
-                                <Label Grid.Column="1" Text="📅" FontSize="20" VerticalOptions="Center" />
+                                <Label Grid.Column="1" Text="⚙️ Criterios" FontSize="13" TextColor="#5EEAD4" FontAttributes="Bold" VerticalOptions="Center" />
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
             </CollectionView>
+
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

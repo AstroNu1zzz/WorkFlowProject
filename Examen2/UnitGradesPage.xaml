@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Examen2.UnitGradesPage"
+             Title="Calificaciones por Unidad"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
+
+    <ScrollView Padding="20">
+        <VerticalStackLayout Spacing="16" MaximumWidthRequest="700">
+
+            <!-- SELECTOR DE UNIDAD -->
+            <Label Text="Seleccionar Unidad:" FontSize="13" TextColor="#64748B" />
+            <Picker x:Name="PickerUnits"
+                    ItemDisplayBinding="{Binding Title}"
+                    SelectedIndexChanged="OnUnitPickerChanged"
+                    TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+
+            <!-- CARDA PROMEDIO ALUMNO (SOLO ALUMNOS) -->
+            <Border x:Name="BorderStudentSummary" IsVisible="False" Padding="16" StrokeShape="RoundRectangle 12" BackgroundColor="#132A2B">
+                <HorizontalStackLayout Spacing="10" HorizontalOptions="Center">
+                    <Label Text="🏆 Tu Promedio en esta Unidad:" FontAttributes="Bold" FontSize="16" TextColor="#5EEAD4" />
+                    <Label x:Name="LblStudentFinalGrade" FontAttributes="Bold" FontSize="18" TextColor="White" />
+                </HorizontalStackLayout>
+            </Border>
+
+            <!-- LISTA GENERAL DE CALIFICACIONES -->
+            <CollectionView x:Name="CvGradesSummary" SelectionMode="None">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,4" Padding="14" StrokeShape="RoundRectangle 12" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                            <Grid ColumnDefinitions="*, Auto">
+                                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                                    <Label Text="{Binding StudentName}" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                    <Label Text="{Binding StatusText}" FontSize="12" TextColor="#64748B" />
+                                </VerticalStackLayout>
+
+                                <Label Grid.Column="1" Text="{Binding FinalGradeText}" FontAttributes="Bold" FontSize="18" TextColor="#5EEAD4" VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

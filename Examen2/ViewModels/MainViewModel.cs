@@ -148,29 +148,62 @@ namespace Examen2.ViewModels
 
                 if (result != null)
                 {
-                    if (CurrentUser == null)
-                        CurrentUser = new User { Id = 1, Username = "Usuario" };
-
-                    string localPath = Path.Combine(FileSystem.AppDataDirectory, $"profile_{CurrentUser.Id}.jpg");
+                    if (CurrentUser == null) return;
 
                     using (var stream = await result.OpenReadAsync())
-                    using (var newStream = File.OpenWrite(localPath))
                     {
-                        await stream.CopyToAsync(newStream);
+                        // Subir a Supabase Storage
+                        var (publicUrl, errorMessage) = await _databaseService.UploadFileStreamAsync(stream, result.FileName);
+
+                        if (!string.IsNullOrEmpty(errorMessage) || string.IsNullOrEmpty(publicUrl))
+                        {
+                            if (Application.Current?.MainPage != null)
+                            {
+                                await Application.Current.MainPage.DisplayAlert("Error", $"No se pudo subir la foto: {errorMessage}", "OK");
+                            }
+                            return;
+                        }
+
+                        // Guardar la URL pública en la BD
+                        CurrentUser.ProfilePicturePath = publicUrl;
+                        await _databaseService.UpdateUserAsync(CurrentUser);
+
+                        // Actualizar la interfaz
+                        ProfileImageSource = ImageSource.FromUri(new Uri(publicUrl));
+                        HasProfilePicture = true;
+
+                        OnPropertyChanged(nameof(CurrentUser));
+                        OnPropertyChanged(nameof(HasProfilePicture));
+                        OnPropertyChanged(nameof(ProfileImageSource));
                     }
-
-                    CurrentUser.ProfilePicturePath = localPath;
-                    await _databaseService.UpdateUserAsync(CurrentUser);
-
-                    ProfileImageSource = ImageSource.FromFile(localPath);
-                    HasProfilePicture = true;
                 }
             }
             catch (Exception ex)
             {
                 if (Application.Current?.MainPage != null)
+                {
                     await Application.Current.MainPage.DisplayAlert("Error", $"No se pudo cargar la imagen: {ex.Message}", "OK");
+                }
             }
+        }
+
+
+
+        private void UpdateProfileImageState()
+        {
+            if (CurrentUser != null && !string.IsNullOrWhiteSpace(CurrentUser.ProfilePicturePath))
+            {
+                HasProfilePicture = true;
+                ProfileImageSource = ImageSource.FromUri(new Uri(CurrentUser.ProfilePicturePath));
+            }
+            else
+            {
+                HasProfilePicture = false;
+                ProfileImageSource = null;
+            }
+
+            OnPropertyChanged(nameof(HasProfilePicture));
+            OnPropertyChanged(nameof(ProfileImageSource));
         }
 
         private void OnLogout()

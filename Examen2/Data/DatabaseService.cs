@@ -30,6 +30,7 @@ namespace Examen2.Data
             _isInitialized = true;
         }
 
+        // --- SUBIDA GENÉRICA DE ARCHIVOS A SUPABASE STORAGE ---
         public async Task<(string Url, string ErrorMessage)> UploadFileStreamAsync(Stream stream, string originalFileName)
         {
             await InitAsync();
@@ -40,7 +41,7 @@ namespace Examen2.Data
             try
             {
                 var storage = _client.Storage.From("Workflow-files");
-                string fileName = $"{Guid.NewGuid()}_{originalFileName}";
+                string fileName = $"avatars/{Guid.NewGuid()}_{originalFileName}";
 
                 using (var memoryStream = new MemoryStream())
                 {
@@ -133,7 +134,6 @@ namespace Examen2.Data
             }
         }
 
-
         // --- CÁLCULO DE PROMEDIO DE UNIDAD PARA UN ALUMNO ---
         public async Task<double> CalculateStudentUnitGradeAsync(int unitId, int userId)
         {
@@ -141,7 +141,6 @@ namespace Examen2.Data
             var criteria = await GetUnitCriteriaAsync(unitId);
             if (!criteria.Any()) return 0;
 
-            // Obtener tareas pertenecientes a la unidad
             var unitItems = await _client.From<ClassContentItem>()
                                          .Where(i => i.UnitId == unitId && i.ItemType == "Tarea")
                                          .Get();
@@ -154,7 +153,6 @@ namespace Examen2.Data
 
                 if (!criterionTaskIds.Any()) continue;
 
-                // Obtener entregas calificadas del alumno para esas tareas
                 var submissions = await _client.From<TaskSubmission>()
                                                .Where(s => s.UserId == userId)
                                                .Get();
@@ -164,7 +162,6 @@ namespace Examen2.Data
                 if (gradedSubmissions.Any())
                 {
                     double criterionAverage = gradedSubmissions.Average(s => s.Grade.Value);
-                    // Ponderar sobre el 100% del criterio
                     finalGrade += (criterionAverage * (criterion.Percentage / 100.0));
                 }
             }
@@ -482,7 +479,6 @@ namespace Examen2.Data
         {
             await InitAsync();
 
-            // Si no tiene unidad asignada explícitamente, busca la unidad según la fecha actual
             if (!item.UnitId.HasValue)
             {
                 var activeUnit = await GetActiveUnitForCourseAsync(item.CourseId, DateTime.Now);

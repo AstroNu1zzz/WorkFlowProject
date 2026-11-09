@@ -41,9 +41,21 @@ public partial class SettingsPage : ContentPage
             LblUsername.Text = user.Username;
             LblEmail.Text = user.Email;
 
-            if (!string.IsNullOrWhiteSpace(user.Username))
+            if (!string.IsNullOrWhiteSpace(user.ProfilePicturePath))
             {
-                LblAvatarInitial.Text = user.Username.Substring(0, 1).ToUpper();
+                ImgAvatar.Source = ImageSource.FromUri(new Uri(user.ProfilePicturePath));
+                ImgAvatar.IsVisible = true;
+                LblAvatarInitial.IsVisible = false;
+            }
+            else
+            {
+                ImgAvatar.IsVisible = false;
+                LblAvatarInitial.IsVisible = true;
+
+                if (!string.IsNullOrWhiteSpace(user.Username))
+                {
+                    LblAvatarInitial.Text = user.Username.Substring(0, 1).ToUpper();
+                }
             }
         }
     }
@@ -51,7 +63,6 @@ public partial class SettingsPage : ContentPage
     private async void OnProfileTapped(object sender, EventArgs e)
     {
         EnsureServices();
-        // Pasar los 3 servicios en orden: DatabaseService, EmailService, MainViewModel
         await Navigation.PushAsync(new EditProfilePage(_databaseService, _emailService, _mainViewModel));
     }
 

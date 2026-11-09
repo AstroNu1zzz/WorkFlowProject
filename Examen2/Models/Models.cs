@@ -19,11 +19,11 @@ namespace Examen2.Data
         [Column("password")]
         public string Password { get; set; }
 
-        [Column("profile_picture_path")]
-        public string ProfilePicturePath { get; set; }
-
         [Column("is_2fa_enabled")]
         public bool Is2FAEnabled { get; set; }
+
+        [Column("profile_picture_path")]
+        public string ProfilePicturePath { get; set; }
     }
 
     [Table("courses")]

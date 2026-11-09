@@ -14,7 +14,7 @@
                    FontAttributes="Bold"
                    TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
 
-            <!-- SECCIÓN 1: PERFIL DE USUARIO (CLICABLE) -->
+            <!-- SECCIÓN 1: PERFIL DE USUARIO -->
             <VerticalStackLayout Spacing="8">
                 <Label Text="PERFIL"
                        FontSize="12"
@@ -31,23 +31,34 @@
                     </Border.GestureRecognizers>
 
                     <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" VerticalOptions="Center">
-                        <!-- AVATAR CON INICIAL DE USUARIO -->
+
+                        <!-- CONTENEDOR AVATAR -->
                         <Border Grid.Column="0"
                                 WidthRequest="48"
                                 HeightRequest="48"
                                 StrokeShape="RoundRectangle 24"
                                 StrokeThickness="0"
                                 BackgroundColor="#5EEAD4">
-                            <Label x:Name="LblAvatarInitial"
-                                   Text="U"
-                                   FontSize="20"
-                                   FontAttributes="Bold"
-                                   TextColor="#0F172A"
-                                   HorizontalOptions="Center"
-                                   VerticalOptions="Center" />
+                            <Grid>
+                                <!-- Inicial por defecto -->
+                                <Label x:Name="LblAvatarInitial"
+                                       Text="U"
+                                       FontSize="20"
+                                       FontAttributes="Bold"
+                                       TextColor="#0F172A"
+                                       HorizontalOptions="Center"
+                                       VerticalOptions="Center" />
+
+                                <!-- Imagen remota de perfil -->
+                                <Image x:Name="ImgAvatar"
+                                       Aspect="AspectFill"
+                                       IsVisible="False"
+                                       WidthRequest="48"
+                                       HeightRequest="48" />
+                            </Grid>
                         </Border>
 
-                        <!-- DATOS REALES DE USUARIO -->
+                        <!-- DATOS DEL USUARIO -->
                         <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
                             <Label x:Name="LblUsername"
                                    Text="Cargando..."
@@ -60,7 +71,7 @@
                                    TextColor="#64748B" />
                         </VerticalStackLayout>
 
-                        <!-- FLECHA FLECHA DE NAVEGACIÓN -->
+                        <!-- FLECHA NAVEGACIÓN -->
                         <Label Grid.Column="2"
                                Text="❯"
                                FontSize="18"
@@ -131,7 +142,7 @@
                 </Border>
             </VerticalStackLayout>
 
-            <!-- SECCIÓN 4: INFORMACIÓN DE LA APP -->
+            <!-- SECCIÓN 4: INFORMACIÓN -->
             <VerticalStackLayout Spacing="8">
                 <Label Text="INFORMACIÓN"
                        FontSize="12"

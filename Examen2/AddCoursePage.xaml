@@ -2,52 +2,39 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.AddCoursePage"
-             Title="Crear clase"
-             BackgroundColor="#F8F9FA">
+             Title="Crear Clase"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
-    <ScrollView Padding="30">
-        <VerticalStackLayout Spacing="20" HorizontalOptions="Center" WidthRequest="340">
-            <Label Text="Crear una nueva clase" FontSize="22" FontAttributes="Bold" TextColor="#1A73E8" />
+    <ScrollView>
+        <VerticalStackLayout Spacing="20" Padding="20" MaximumWidthRequest="600" HorizontalOptions="Center">
+            <Label Text="Crear una nueva clase" FontSize="22" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" Margin="4,10,4,0" />
 
-            <Border BackgroundColor="White" Stroke="#E0E0E0" StrokeThickness="1" Padding="20">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="12" />
-                </Border.StrokeShape>
-
-                <VerticalStackLayout Spacing="15">
-
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Nombre de la clase (obligatorio)" FontSize="12" TextColor="#5F6368" />
-                        <Entry x:Name="TxtCourseName" Placeholder="ej. DERECHO MERCANTIL 5IM6" TextColor="#5F6368"/>
+            <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 16" Padding="24" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                <VerticalStackLayout Spacing="20">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Nombre de la clase (obligatorio)" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtCourseName" Placeholder="Ej. Programación Avanzada" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" PlaceholderColor="{AppThemeBinding Light=#CBD5E1, Dark=#475569}" />
                     </VerticalStackLayout>
 
-                    <!-- Selector de Imagen de Fondo -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Imagen de fondo (Banner)" FontSize="12" TextColor="#5F6368" />
-                        <Button Text="📷 Seleccionar Imagen" 
-            Clicked="OnPickImageClicked" 
-            BackgroundColor="#E8F0FE" 
-            TextColor="#1967D2" 
-            CornerRadius="8" />
-
-                        <!-- Contenedor Border para redondear la imagen correctamente -->
-                        <Border x:Name="BorderBannerPreview" 
-            IsVisible="False" 
-            Margin="0,10,0,0" 
-            StrokeThickness="0" 
-            HeightRequest="120">
-                            <Border.StrokeShape>
-                                <RoundRectangle CornerRadius="8" />
-                            </Border.StrokeShape>
-
-                            <Image x:Name="ImgBannerPreview" 
-               Aspect="AspectFill" />
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Imagen de fondo (Banner)" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#CBD5E1, Dark=#374151}" StrokeShape="RoundRectangle 10" Padding="12" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#181D23}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnPickImageClicked" />
+                            </Border.GestureRecognizers>
+                            <VerticalStackLayout Spacing="8">
+                                <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                    <Label Text="📷" FontSize="16" VerticalOptions="Center" />
+                                    <Label Text="Seleccionar Imagen" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#334155, Dark=#61E5CE}" VerticalOptions="Center" />
+                                </HorizontalStackLayout>
+                                <Image x:Name="ImgBannerPreview" HeightRequest="80" Aspect="AspectFill" IsVisible="false" />
+                            </VerticalStackLayout>
                         </Border>
                     </VerticalStackLayout>
 
-                    <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,15,0,0">
-                        <Button Grid.Column="0" Text="Cancelar" Clicked="OnCancelClicked" BackgroundColor="Transparent" TextColor="#5F6368" />
-                        <Button Grid.Column="1" Text="Crear" Clicked="OnCreateCourseClicked" BackgroundColor="#48E5C2" TextColor="White" FontAttributes="Bold" CornerRadius="8" />
+                    <Grid ColumnDefinitions="*, *" ColumnSpacing="12" Margin="0,10,0,0">
+                        <Button Grid.Column="0" Text="Cancelar" Clicked="OnCancelClicked" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HeightRequest="45" />
+                        <Button Grid.Column="1" Text="Crear" Clicked="OnCreateCourseClicked" BackgroundColor="#61E5CE" TextColor="#0F172A" FontAttributes="Bold" HeightRequest="45" CornerRadius="10" />
                     </Grid>
                 </VerticalStackLayout>
             </Border>

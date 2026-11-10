@@ -67,34 +67,51 @@
             <ScrollView x:Name="ViewNovedades" IsVisible="True">
                 <VerticalStackLayout Spacing="16" Padding="16,12,16,24">
 
-                    <!-- Banner de Portada -->
-                    <Border HeightRequest="150"
-                            StrokeThickness="0"
-                            StrokeShape="RoundRectangle 20"
-                            Shadow="{StaticResource FeedShadow}">
+                    <!-- BANNER / PORTADA DEL CURSO -->
+                    <Border HeightRequest="140"
+        StrokeThickness="0"
+        StrokeShape="RoundRectangle 16"
+        Margin="0,0,0,16">
                         <Grid>
-                            <Image Source="{Binding Course.BannerImagePath}"
-                                   Aspect="AspectFill"
-                                   HorizontalOptions="Fill"
-                                   VerticalOptions="Fill" />
+                            <!-- Imagen de portada -->
+                            <Image Source="{Binding BannerImagePath}"
+               Aspect="AspectFill"
+               HorizontalOptions="Fill"
+               VerticalOptions="Fill" />
 
+                            <!-- Sombra / Gradiente superior -->
                             <Border StrokeThickness="0">
                                 <Border.Background>
                                     <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                                        <GradientStop Color="#30000000" Offset="0.0" />
-                                        <GradientStop Color="#800F172A" Offset="0.5" />
-                                        <GradientStop Color="#F00F172A" Offset="1.0" />
+                                        <GradientStop Color="#40000000" Offset="0.0" />
+                                        <GradientStop Color="#CC0F172A" Offset="1.0" />
                                     </LinearGradientBrush>
                                 </Border.Background>
 
-                                <Grid Padding="20" RowDefinitions="*, Auto">
-                                    <VerticalStackLayout Grid.Row="1" Spacing="4">
-                                        <Label Text="{Binding Course.CourseName}" 
-                                               FontSize="24" 
-                                               FontAttributes="Bold" 
-                                               TextColor="White" />
-                                        <HorizontalStackLayout Spacing="4">
-                                            <Label Text="{Binding Course.DisplayTeacherName, StringFormat='Prof. {0}'}" FontSize="13" FontAttributes="Bold" TextColor="#5EEAD4" />
+                                <!-- DATOS DE LA CLASE -->
+                                <Grid Padding="20" VerticalOptions="End">
+                                    <VerticalStackLayout Spacing="2">
+                                        <Label x:Name="LblCourseName"
+                           Text="Nombre de Clase"
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="White" />
+
+                                        <Label x:Name="LblTeacherName"
+                           Text="Prof. Nombre"
+                           FontSize="13"
+                           TextColor="#5EEAD4" />
+
+                                        <!-- CÓDIGO DE UNIÓN A LA CLASE -->
+                                        <HorizontalStackLayout Spacing="6" Margin="0,4,0,0">
+                                            <Label Text="Código de clase:"
+                               FontSize="12"
+                               TextColor="#E2E8F0" />
+                                            <Label x:Name="LblCourseCode"
+                               Text="------"
+                               FontSize="12"
+                               FontAttributes="Bold"
+                               TextColor="#5EEAD4" />
                                         </HorizontalStackLayout>
                                     </VerticalStackLayout>
                                 </Grid>

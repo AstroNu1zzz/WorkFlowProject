@@ -112,10 +112,10 @@ public partial class CourseDetailPage : ContentPage
     private void EnsureServices()
     {
         _databaseService ??= Handler?.MauiContext?.Services.GetService<DatabaseService>()
-                           ?? Application.Current?.Handler?.MauiContext?.Services.GetService<DatabaseService>();
+                            ?? Application.Current?.Handler?.MauiContext?.Services.GetService<DatabaseService>();
 
         _mainViewModel ??= Handler?.MauiContext?.Services.GetService<MainViewModel>()
-                         ?? Application.Current?.Handler?.MauiContext?.Services.GetService<MainViewModel>();
+                          ?? Application.Current?.Handler?.MauiContext?.Services.GetService<MainViewModel>();
     }
 
     private async Task LoadCourseContentAsync()
@@ -141,6 +141,12 @@ public partial class CourseDetailPage : ContentPage
         if (FindByName("BorderCreatePost") is VisualElement borderCreatePost) borderCreatePost.IsVisible = _isTeacher;
         if (FindByName("BtnManageUnits") is VisualElement btnManageUnits) btnManageUnits.IsVisible = _isTeacher;
 
+        // Asignar el código de la clase al banner
+        if (FindByName("LblCourseCode") is Label lblCourseCode)
+        {
+            lblCourseCode.Text = string.IsNullOrWhiteSpace(Course?.CourseCode) ? "------" : Course.CourseCode;
+        }
+
         // 3. Cargar unidades y publicaciones de Supabase
         var units = await _databaseService.GetCourseUnitsAsync(Course.Id);
         var items = await _databaseService.GetCourseContentItemsAsync(Course.Id);
@@ -165,8 +171,8 @@ public partial class CourseDetailPage : ContentPage
         foreach (var unit in units)
         {
             var unitItems = items.Where(i => i.UnitId == unit.Id || (i.CreatedAt.Date >= unit.StartDate.Date && i.CreatedAt.Date <= unit.EndDate.Date))
-                                 .Select(i => new FeedPostViewModel(i))
-                                 .ToList();
+                                  .Select(i => new FeedPostViewModel(i))
+                                  .ToList();
 
             if (unitItems.Any())
             {
@@ -304,6 +310,15 @@ public partial class CourseDetailPage : ContentPage
         await DisplayAlert("Información del Curso", $"{Course.CourseName}\nCódigo de clase: {Course.CourseCode}\nProfesor: {Course.TeacherName}", "OK");
     }
 
+    private async void OnCopyCourseCodeTapped(object sender, EventArgs e)
+    {
+        if (!string.IsNullOrWhiteSpace(Course?.CourseCode))
+        {
+            await Clipboard.Default.SetTextAsync(Course.CourseCode);
+            await DisplayAlert("Código Copiado", $"El código '{Course.CourseCode}' se ha copiado al portapapeles.", "OK");
+        }
+    }
+
     private async void OnCreatePostTapped(object sender, EventArgs e)
     {
         await ShowCreateOptionsAsync();
@@ -379,14 +394,12 @@ public partial class CourseDetailPage : ContentPage
 
         if (vm == null) return;
 
-        // Si es alumno, no tiene opciones de gestión sobre la publicación
         if (!_isTeacher)
         {
             await DisplayAlert("Opciones", $"Publicado el {vm.DateFormatted}", "OK");
             return;
         }
 
-        // Opciones exclusivas para el profesor
         string action = await DisplayActionSheet(
             $"Opciones de: {vm.SourceItem.Title}",
             "Cancelar",
@@ -403,7 +416,6 @@ public partial class CourseDetailPage : ContentPage
 
             if (confirm)
             {
-                // Eliminar de Supabase y recargar el feed
                 await _databaseService.DeleteClassContentItemAsync(vm.SourceItem.Id);
                 await LoadCourseContentAsync();
             }

@@ -26,6 +26,7 @@ namespace Examen2.ViewModels
                 _currentUser = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(UserInitial));
+                UpdateProfileImageState(); // <--- Sincroniza el avatar al cambiar el usuario
             }
         }
 
@@ -122,7 +123,7 @@ namespace Examen2.ViewModels
                 Preferences.Default.Set("LoggedInUserId", user.Id);
                 _ = LoadCoursesAsync();
             }
-            LoadProfilePicture();
+            UpdateProfileImageState(); // <--- CORREGIDO: Reemplazado LoadProfilePicture() por UpdateProfileImageState()
         }
 
         private void LoadProfilePicture()

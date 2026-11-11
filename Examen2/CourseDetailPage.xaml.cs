@@ -301,7 +301,7 @@ public partial class CourseDetailPage : ContentPage
 
     private async void OnCourseInfoClicked(object sender, EventArgs e)
     {
-        await DisplayAlert("Información del Curso", $"{Course.CourseName}\nCódigo de clase: {Course.CourseCode}\nProfesor: {Course.TeacherName}", "OK");
+        await DisplayAlert("Información del Curso", $"{Course.CourseName}\nCódigo de clase: {Course.CourseCode}\nProfesor: {Course.DisplayTeacherName}", "OK");
     }
 
     private async void OnCopyCourseCodeTapped(object sender, EventArgs e)

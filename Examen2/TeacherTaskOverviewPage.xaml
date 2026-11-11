@@ -3,67 +3,65 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.TeacherTaskOverviewPage"
              Title="Revisión de Tarea"
+             NavigationPage.HasNavigationBar="False"
              BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
-    <ScrollView Padding="20">
-        <VerticalStackLayout Spacing="20" MaximumWidthRequest="700">
+    <Grid RowDefinitions="Auto, *">
+        <Border Grid.Row="0" StrokeThickness="0" Padding="16,14" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+            <Label Text="Panel de Revisión de Tarea" FontSize="18" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" VerticalOptions="Center" />
+        </Border>
 
-            <!-- CABECERA DE LA TAREA -->
-            <Border Padding="20"
-                    StrokeThickness="1"
-                    Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
-                    StrokeShape="RoundRectangle 16"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                <VerticalStackLayout Spacing="8">
-                    <Label x:Name="LblTitle" FontSize="22" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                    <Label x:Name="LblDueDate" FontSize="13" FontAttributes="Bold" TextColor="#F87171" />
-                    <Label x:Name="LblStatusBadge" FontSize="12" TextColor="#5EEAD4" />
-                </VerticalStackLayout>
-            </Border>
+        <ScrollView Grid.Row="1" Padding="16">
+            <VerticalStackLayout Spacing="18" MaximumWidthRequest="700" HorizontalOptions="Center">
+                <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 16" Padding="20" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label x:Name="LblTitle" FontSize="20" FontAttributes="Bold" TextColor="#61E5CE" />
+                        <Label x:Name="LblDueDate" FontSize="13" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        <Label x:Name="LblStatusBadge" FontSize="12" FontAttributes="Bold" />
 
-            <!-- ESTADÍSTICAS RÁPIDAS -->
-            <Grid ColumnDefinitions="*, *" ColumnSpacing="14">
-                <Border Grid.Column="0" Padding="14" StrokeShape="RoundRectangle 12" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                    <VerticalStackLayout HorizontalOptions="Center">
-                        <Label x:Name="LblCountSubmitted" FontSize="24" FontAttributes="Bold" TextColor="#5EEAD4" HorizontalOptions="Center" />
-                        <Label Text="Entregadas" FontSize="12" TextColor="#64748B" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </Border>
-
-                <Border Grid.Column="1" Padding="14" StrokeShape="RoundRectangle 12" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                    <VerticalStackLayout HorizontalOptions="Center">
-                        <Label x:Name="LblCountMissing" FontSize="24" FontAttributes="Bold" TextColor="#F87171" HorizontalOptions="Center" />
-                        <Label Text="Sin entregar" FontSize="12" TextColor="#64748B" HorizontalOptions="Center" />
-                    </VerticalStackLayout>
-                </Border>
-            </Grid>
-
-            <!-- LISTA DE ALUMNOS Y ESTADO DE ENTREGA -->
-            <Label Text="Alumnos inscritos" FontSize="17" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-
-            <CollectionView x:Name="CvStudentSubmissions" SelectionMode="None">
-                <CollectionView.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,4" Padding="16,12" StrokeShape="RoundRectangle 12" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnStudentItemTapped" />
-                            </Border.GestureRecognizers>
-
-                            <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" VerticalOptions="Center">
-                                <Label Text="🎓" FontSize="22" VerticalOptions="Center" />
-
-                                <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
-                                    <Label Text="{Binding Student.Username}" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                                    <Label Text="{Binding StatusText}" FontSize="12" TextColor="{Binding StatusColor}" />
+                        <Grid ColumnDefinitions="*, *" ColumnSpacing="12" Margin="0,6,0,0">
+                            <Border Grid.Column="0" StrokeThickness="1" Stroke="{AppThemeBinding Light=#CBD5E1, Dark=#374151}" StrokeShape="RoundRectangle 12" Padding="14" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#181D23}">
+                                <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
+                                    <Label x:Name="LblCountSubmitted" Text="0" FontSize="22" FontAttributes="Bold" TextColor="#5EEAD4" HorizontalOptions="Center" />
+                                    <Label Text="Entregadas" FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
                                 </VerticalStackLayout>
+                            </Border>
 
-                                <Label Grid.Column="2" Text="{Binding GradeText}" FontAttributes="Bold" FontSize="14" TextColor="#5EEAD4" VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </CollectionView.ItemTemplate>
-            </CollectionView>
+                            <Border Grid.Column="1" StrokeThickness="1" Stroke="{AppThemeBinding Light=#CBD5E1, Dark=#374151}" StrokeShape="RoundRectangle 12" Padding="14" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#181D23}">
+                                <VerticalStackLayout Spacing="2" HorizontalOptions="Center">
+                                    <Label x:Name="LblCountMissing" Text="0" FontSize="22" FontAttributes="Bold" TextColor="#EF4444" HorizontalOptions="Center" />
+                                    <Label Text="Sin entregar" FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </Border>
 
-        </VerticalStackLayout>
-    </ScrollView>
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Listado de Alumnos" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                    <CollectionView x:Name="CvStudentSubmissions" SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <LinearItemsLayout ItemSpacing="10" Orientation="Vertical" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 14" Padding="16" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Tapped="OnStudentItemTapped" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="*, Auto" ColumnSpacing="12">
+                                        <VerticalStackLayout Spacing="3" VerticalOptions="Center">
+                                            <Label Text="{Binding Student.Username}" FontSize="15" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                            <Label Text="{Binding StatusText}" FontSize="12" TextColor="{Binding StatusColor}" />
+                                        </VerticalStackLayout>
+                                        <Label Grid.Column="1" Text="{Binding GradeText}" FontSize="13" FontAttributes="Bold" TextColor="#5EEAD4" VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
+                </VerticalStackLayout>
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

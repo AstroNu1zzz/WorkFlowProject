@@ -26,7 +26,7 @@ namespace Examen2.ViewModels
                 _currentUser = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(UserInitial));
-                UpdateProfileImageState(); // <--- Sincroniza el avatar al cambiar el usuario
+                UpdateProfileImageState();
             }
         }
 

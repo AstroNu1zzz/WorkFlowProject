@@ -60,6 +60,12 @@ public partial class SettingsPage : ContentPage
         }
     }
 
+    // EVENTO DEL BOTÓN REGRESAR
+    private async void OnBackButtonClicked(object sender, EventArgs e)
+    {
+        await Navigation.PopAsync();
+    }
+
     private async void OnProfileTapped(object sender, EventArgs e)
     {
         EnsureServices();

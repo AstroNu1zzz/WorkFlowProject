@@ -2,66 +2,79 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.LoginPage"
-             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}"
-             NavigationPage.HasNavigationBar="False">
+             Title="Iniciar Sesión"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
-    <ScrollView VerticalOptions="Center">
-        <Grid HorizontalOptions="Center" Margin="0,20">
-            <Border BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}"
-                    Stroke="{AppThemeBinding Light=#E0E0E0, Dark=#2D3748}"
+    <ScrollView>
+        <Grid VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
+            <Border WidthRequest="380"
                     StrokeThickness="1"
-                    WidthRequest="380"
-                    Padding="30">
-                <Border.StrokeShape>
-                    <RoundRectangle CornerRadius="12" />
-                </Border.StrokeShape>
+                    Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                    StrokeShape="RoundRectangle 20"
+                    Padding="30"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                <Border.Shadow>
+                    <Shadow Brush="#000000" Opacity="0.15" Offset="0,8" Radius="16" />
+                </Border.Shadow>
 
-                <VerticalStackLayout Spacing="16">
-                    <!-- Header logo / título -->
-                    <Label Text="WorkFlow"
-                           FontSize="28"
-                           FontAttributes="Bold"
-                           TextColor="#1A73E8"
-                           HorizontalOptions="Center" />
-
-                    <Label Text="Iniciar sesión"
-                           FontSize="18"
-                           TextColor="{AppThemeBinding Light=#3C4043, Dark=#CBD5E1}"
-                           HorizontalOptions="Center" />
-
-                    <!-- Campo Usuario / Correo -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Usuario o Correo" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
-                        <Entry x:Name="TxtUsernameOrEmail"
-                               Placeholder="ejemplo@cecyt13.ipn.mx"
-                               TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                <VerticalStackLayout Spacing="20">
+                    <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                        <Label Text="WorkFlow" 
+                               FontSize="28" 
+                               FontAttributes="Bold" 
+                               TextColor="#61E5CE" 
+                               HorizontalOptions="Center" />
+                        <Label Text="Inicia sesión para continuar" 
+                               FontSize="14" 
+                               TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" 
+                               HorizontalOptions="Center" />
                     </VerticalStackLayout>
 
-                    <!-- Campo Contraseña -->
-                    <VerticalStackLayout Spacing="5">
-                        <Label Text="Contraseña" FontSize="12" TextColor="{AppThemeBinding Light=#5F6368, Dark=#94A3B8}" />
-                        <Entry x:Name="TxtPassword"
-                               IsPassword="True"
-                               Placeholder="••••••••"
-                               TextColor="{AppThemeBinding Light=Black, Dark=White}"/>
+                    <VerticalStackLayout Spacing="14">
+                        <!-- TxtUsernameOrEmail sincronizado con tu C# -->
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Usuario o Correo electrónico" 
+                                   FontSize="12" 
+                                   FontAttributes="Bold" 
+                                   TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                            <Entry x:Name="TxtUsernameOrEmail"
+                                   Placeholder="usuario o correo@ejemplo.com"
+                                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"
+                                   PlaceholderColor="{AppThemeBinding Light=#CBD5E1, Dark=#475569}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="4">
+                            <Label Text="Contraseña" 
+                                   FontSize="12" 
+                                   FontAttributes="Bold" 
+                                   TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                            <Entry x:Name="TxtPassword"
+                                   Placeholder="••••••••"
+                                   IsPassword="True"
+                                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"
+                                   PlaceholderColor="{AppThemeBinding Light=#CBD5E1, Dark=#475569}" />
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
 
-                    <!-- Botón de Ingreso -->
-                    <Button x:Name="LoginButton"
-                            Text="Iniciar Sesión"
-                            BackgroundColor="#1A73E8"
-                            TextColor="White"
-                            CornerRadius="6"
-                            HeightRequest="42"
-                            Margin="0,10,0,0"
-                            Clicked="OnLoginClicked" />
+                    <Button Text="Entrar"
+                            Clicked="OnLoginClicked"
+                            BackgroundColor="#61E5CE"
+                            TextColor="#0F172A"
+                            FontAttributes="Bold"
+                            FontSize="15"
+                            HeightRequest="48"
+                            CornerRadius="12"
+                            Margin="0,4,0,0" />
 
-                    <!-- Botón de Registro -->
                     <Button Text="¿No tienes cuenta? Regístrate"
+                            Clicked="OnRegisterClicked"
                             BackgroundColor="Transparent"
-                            TextColor="#1A73E8"
+                            TextColor="{AppThemeBinding Light=#5C93F9, Dark=#5EEAD4}"
                             FontSize="13"
-                            Clicked="OnRegisterClicked" />
+                            Padding="0"
+                            HeightRequest="30"
+                            HorizontalOptions="Center" />
                 </VerticalStackLayout>
             </Border>
         </Grid>

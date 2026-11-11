@@ -2,54 +2,31 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.TwoFactorPage"
-             BackgroundColor="#F8F9FA"
-             NavigationPage.HasNavigationBar="False">
+             Title="Verificación de Dos Pasos"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
-    <Grid VerticalOptions="Center" HorizontalOptions="Center">
-        <Border BackgroundColor="White"
-                Stroke="#E0E0E0"
-                StrokeThickness="1"
-                WidthRequest="380"
-                Padding="30">
-            <Border.StrokeShape>
-                <RoundRectangle CornerRadius="12" />
-            </Border.StrokeShape>
+    <ScrollView>
+        <Grid VerticalOptions="Center" HorizontalOptions="Center" Padding="20">
+            <Border WidthRequest="360" StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 20" Padding="30" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                <Border.Shadow>
+                    <Shadow Brush="#000000" Opacity="0.15" Offset="0,8" Radius="16" />
+                </Border.Shadow>
+                <VerticalStackLayout Spacing="20">
+                    <VerticalStackLayout Spacing="6" HorizontalOptions="Center">
+                        <Label Text="🔐 Verificación 2FA" FontSize="24" FontAttributes="Bold" TextColor="#61E5CE" HorizontalOptions="Center" />
+                        <Label Text="Ingresa el código de 6 dígitos enviado a tu correo electrónico." FontSize="13" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
 
-            <VerticalStackLayout Spacing="18">
-                <Label Text="Autenticación de 2 factores"
-                       FontSize="22"
-                       FontAttributes="Bold"
-                       TextColor="#3C4043"
-                       HorizontalOptions="Center" />
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Código de acceso" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtCode" Placeholder="123456" Keyboard="Numeric" MaxLength="6" FontSize="20" HorizontalTextAlignment="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" PlaceholderColor="{AppThemeBinding Light=#CBD5E1, Dark=#475569}" />
+                    </VerticalStackLayout>
 
-                <Label x:Name="LblEmailInfo"
-       FontSize="13"
-       TextColor="#5F6368"
-       HorizontalTextAlignment="Center"
-       LineBreakMode="WordWrap" />
-
-                <!-- Campo PIN 6 Dígitos -->
-                <Entry x:Name="TxtCode"
-                       Placeholder="000000"
-                       MaxLength="6"
-                       Keyboard="Numeric"
-                       HorizontalTextAlignment="Center"
-                       FontSize="24" 
-                       TextColor="#5F6368"/>
-
-                <Button Text="Verificar e Ingresar"
-                        BackgroundColor="#1A73E8"
-                        TextColor="White"
-                        CornerRadius="6"
-                        HeightRequest="42"
-                        Margin="0,10,0,0"
-                        Clicked="OnVerifyClicked" />
-
-                <Button Text="Cancelar"
-                        BackgroundColor="Transparent"
-                        TextColor="#5F6368"
-                        Clicked="OnCancelClicked" />
-            </VerticalStackLayout>
-        </Border>
-    </Grid>
+                    <Button Text="Verificar" Clicked="OnVerifyClicked" BackgroundColor="#61E5CE" TextColor="#0F172A" FontAttributes="Bold" FontSize="15" HeightRequest="48" CornerRadius="12" Margin="0,4,0,0" />
+                    <Button Text="Cancelar" Clicked="OnCancelClicked" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" FontSize="13" Padding="0" HeightRequest="30" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+            </Border>
+        </Grid>
+    </ScrollView>
 </ContentPage>

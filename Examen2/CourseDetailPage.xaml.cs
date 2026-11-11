@@ -140,6 +140,12 @@ public partial class CourseDetailPage : ContentPage
         if (FindByName("BtnAddTeacher") is VisualElement btnAddTeacher) btnAddTeacher.IsVisible = _isTeacher;
         if (FindByName("BorderCreatePost") is VisualElement borderCreatePost) borderCreatePost.IsVisible = _isTeacher;
         if (FindByName("BtnManageUnits") is VisualElement btnManageUnits) btnManageUnits.IsVisible = _isTeacher;
+        if (FindByName("LblCourseName") is Label lblCourseName)
+            lblCourseName.Text = Course?.CourseName ?? "Clase";
+        if (FindByName("LblTeacherName") is Label lblTeacherName)
+            lblTeacherName.Text = $"Prof. {Course?.PrimaryTeacherName ?? Course?.TeacherName}";
+        if (FindByName("LblCourseCode") is Label lblCourseCode)
+            lblCourseCode.Text = string.IsNullOrWhiteSpace(Course?.CourseCode) ? "------" : Course.CourseCode;
 
         // Asignar el código de la clase al banner
         if (FindByName("LblCourseCode") is Label lblCourseCode)

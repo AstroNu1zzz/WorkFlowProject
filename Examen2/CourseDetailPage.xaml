@@ -74,7 +74,7 @@
         Margin="0,0,0,16">
                         <Grid>
                             <!-- Imagen de portada -->
-                            <Image Source="{Binding BannerImagePath}"
+                            <Image Source="{Binding Course.BannerImagePath}"
                Aspect="AspectFill"
                HorizontalOptions="Fill"
                VerticalOptions="Fill" />
@@ -91,27 +91,35 @@
                                 <!-- DATOS DE LA CLASE -->
                                 <Grid Padding="20" VerticalOptions="End">
                                     <VerticalStackLayout Spacing="2">
-                                        <Label x:Name="LblCourseName"
-                           Text="Nombre de Clase"
-                           FontSize="22"
-                           FontAttributes="Bold"
-                           TextColor="White" />
 
-                                        <Label x:Name="LblTeacherName"
-                           Text="Prof. Nombre"
-                           FontSize="13"
-                           TextColor="#5EEAD4" />
+                                        <!-- ENLACE AL NOMBRE DE LA CLASE -->
+                                        <Label Text="{Binding Course.CourseName}"
+                                           FontSize="22"
+                                           FontAttributes="Bold"
+                                           TextColor="White" />         
+
+                                        <!-- ENLACE AL NOMBRE DEL PROFESOR -->
+                                        <Label Text="{Binding Course.DisplayTeacherName, StringFormat='Prof. {0}'}"
+                                           FontSize="13"
+                                           TextColor="#5EEAD4" />       
 
                                         <!-- CÓDIGO DE UNIÓN A LA CLASE -->
                                         <HorizontalStackLayout Spacing="6" Margin="0,4,0,0">
+                                            <HorizontalStackLayout.GestureRecognizers>
+                                                <TapGestureRecognizer Tapped="OnCopyCourseCodeTapped" />
+                                            </HorizontalStackLayout.GestureRecognizers>
+
                                             <Label Text="Código de clase:"
-                               FontSize="12"
-                               TextColor="#E2E8F0" />
-                                            <Label x:Name="LblCourseCode"
-                               Text="------"
-                               FontSize="12"
-                               FontAttributes="Bold"
-                               TextColor="#5EEAD4" />
+                                               FontSize="12"
+                                               TextColor="#E2E8F0" />
+
+                                            <!-- ENLACE AL CÓDIGO -->
+                                            <Label Text="{Binding Course.CourseCode, TargetNullValue='------'}"
+                                                   FontSize="12"
+                                                   FontAttributes="Bold"
+                                                   TextColor="#5EEAD4" />
+
+                                            <Label Text="📋" FontSize="11" VerticalOptions="Center" />
                                         </HorizontalStackLayout>
                                     </VerticalStackLayout>
                                 </Grid>

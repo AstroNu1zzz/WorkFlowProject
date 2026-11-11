@@ -29,7 +29,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- SECCIÓN CONFIGURACIÓN DE CRITERIOS DE LA UNIDAD SELECCIONADA -->
+            <!-- SECCIÓN DE CRITERIOS DE LA UNIDAD SELECCIONADA -->
             <Border x:Name="BorderCriteriaPanel" IsVisible="False" Padding="16" StrokeShape="RoundRectangle 14" Stroke="#5EEAD4" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
                 <VerticalStackLayout Spacing="12">
                     <Label x:Name="LblSelectedUnitTitle" FontAttributes="Bold" FontSize="16" TextColor="#5EEAD4" />

@@ -26,6 +26,7 @@ namespace Examen2.ViewModels
                 _currentUser = value;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(UserInitial));
+                UpdateProfileImageState();
             }
         }
 
@@ -122,7 +123,7 @@ namespace Examen2.ViewModels
                 Preferences.Default.Set("LoggedInUserId", user.Id);
                 _ = LoadCoursesAsync();
             }
-            LoadProfilePicture();
+            UpdateProfileImageState();
         }
 
         private void LoadProfilePicture()
@@ -152,7 +153,6 @@ namespace Examen2.ViewModels
 
                     using (var stream = await result.OpenReadAsync())
                     {
-                        // Subir a Supabase Storage
                         var (publicUrl, errorMessage) = await _databaseService.UploadFileStreamAsync(stream, result.FileName);
 
                         if (!string.IsNullOrEmpty(errorMessage) || string.IsNullOrEmpty(publicUrl))
@@ -164,11 +164,9 @@ namespace Examen2.ViewModels
                             return;
                         }
 
-                        // Guardar la URL pública en la BD
                         CurrentUser.ProfilePicturePath = publicUrl;
                         await _databaseService.UpdateUserAsync(CurrentUser);
 
-                        // Actualizar la interfaz
                         ProfileImageSource = ImageSource.FromUri(new Uri(publicUrl));
                         HasProfilePicture = true;
 
@@ -186,8 +184,6 @@ namespace Examen2.ViewModels
                 }
             }
         }
-
-
 
         private void UpdateProfileImageState()
         {
@@ -232,14 +228,28 @@ namespace Examen2.ViewModels
             var activities = await _databaseService.GetGlobalActivitiesAsync(CurrentUser.Id);
             GlobalRecentActivities.Clear();
 
+            // Usamos un contador para alternar los 3 colores vibrantes en las tareas
+            int colorIndex = 0;
+            string[] vibrantColors = { "#5EEAD4", "#5C93F9", "#86EFAC" };
+
             foreach (var a in activities)
             {
-                string gradient = a.ItemType switch
+                // Asignación de colores vibrantes
+                string gradient = "#5EEAD4"; // Color por defecto
+
+                if (a.ItemType == "Tarea")
                 {
-                    "Tarea" => "#FADBD8",
-                    "Material" => "#D6EAF8",
-                    _ => "#D1F2EB"
-                };
+                    gradient = vibrantColors[colorIndex % vibrantColors.Length];
+                    colorIndex++;
+                }
+                else if (a.ItemType == "Material")
+                {
+                    gradient = "#5EEAD4"; // Turquesa
+                }
+                else // Anuncio u otros
+                {
+                    gradient = "#86EFAC"; // Verde vibrante
+                }
 
                 string icon = a.ItemType switch
                 {
@@ -264,7 +274,6 @@ namespace Examen2.ViewModels
             }
         }
 
-        // --- EVENTO DEL BOTÓN + (UNIRSE O CREAR CLASE) ---
         private async void OnAddCourse()
         {
             IsDrawerVisible = false;
@@ -275,6 +284,7 @@ namespace Examen2.ViewModels
                 "Cancelar",
                 null,
                 "Unirse a una clase",
+                "Escanear código QR",
                 "Crear una clase");
 
             if (action == "Unirse a una clase")
@@ -286,22 +296,42 @@ namespace Examen2.ViewModels
                     cancel: "Cancelar",
                     placeholder: "Ej. X8K9P2",
                     maxLength: 6,
-                    keyboard: Microsoft.Maui.Keyboard.Text); // Usar explícitamente Microsoft.Maui.Keyboard
+                    keyboard: Microsoft.Maui.Keyboard.Text);
 
                 if (string.IsNullOrWhiteSpace(code)) return;
 
                 code = code.Trim().ToUpper();
-
                 var (success, message) = await _databaseService.JoinCourseWithCodeAsync(code, CurrentUser.Id);
 
-                await Application.Current.MainPage.DisplayAlert(
-                    success ? "Éxito" : "Atención",
-                    message,
-                    "OK");
+                await Application.Current.MainPage.DisplayAlert(success ? "Éxito" : "Atención", message, "OK");
 
                 if (success)
                 {
                     await RefreshCoursesAsync();
+                }
+            }
+            else if (action == "Escanear código QR")
+            {
+                string scannedResult = await Application.Current.MainPage.DisplayPromptAsync(
+                    "Escáner QR WorkFlow",
+                    "Apunta la cámara al código QR del profesor o ingresa el token detectado:",
+                    "Conectar",
+                    "Cancelar",
+                    "Ej. WORKFLOW-QR-INF4",
+                    maxLength: 30,
+                    keyboard: Microsoft.Maui.Keyboard.Default);
+
+                if (!string.IsNullOrWhiteSpace(scannedResult))
+                {
+                    scannedResult = scannedResult.Trim().ToUpper();
+                    var (success, message) = await _databaseService.JoinCourseWithCodeAsync(scannedResult, CurrentUser.Id);
+
+                    await Application.Current.MainPage.DisplayAlert(success ? "¡Éxito!" : "Atención", message, "OK");
+
+                    if (success)
+                    {
+                        await RefreshCoursesAsync();
+                    }
                 }
             }
             else if (action == "Crear una clase")
@@ -353,9 +383,28 @@ namespace Examen2.ViewModels
             var activities = await _databaseService.GetGlobalActivitiesAsync(CurrentUser.Id);
             GlobalRecentActivities.Clear();
 
+            int colorIndex = 0;
+            string[] vibrantColors = { "#5EEAD4", "#5C93F9", "#86EFAC" };
+
             foreach (var a in activities)
             {
-                string gradient = a.ItemType == "Tarea" ? "#FADBD8" : (a.ItemType == "Material" ? "#D6EAF8" : "#D1F2EB");
+                // Asignación de colores vibrantes
+                string gradient = "#5EEAD4";
+
+                if (a.ItemType == "Tarea")
+                {
+                    gradient = vibrantColors[colorIndex % vibrantColors.Length];
+                    colorIndex++;
+                }
+                else if (a.ItemType == "Material")
+                {
+                    gradient = "#5EEAD4";
+                }
+                else
+                {
+                    gradient = "#86EFAC";
+                }
+
                 string icon = a.ItemType == "Tarea" ? "📋" : (a.ItemType == "Material" ? "📖" : "📢");
 
                 var parentCourse = courses.FirstOrDefault(c => c.Id == a.CourseId);
@@ -470,3 +519,48 @@ namespace Examen2.ViewModels
         }
     }
 }
+
+/*
+ * 
+ * Y al final, después de tantas iteraciones y refactorizaciones,
+ * hemos llegado a estas últimas líneas de código.
+ * Exactamente igual como acabó mi historia con ella...
+ *
+ * Todo empezó por allá a mis 16 años, a finales de Julio, en aquella
+ * época trabajaba durante las vacaciones como becario en una empresa.Ahí conocí a Linda Villanueva.
+ * Al principio pensé que me llevaría mejor con su hermana, pero con el tiempo
+ * descubrimos una conexión única: los mismos gustos, una risa hermosa y una gran vibra
+ * y congeniábamos bastante bien, pero como saber que no todo seria perfecto...
+ *
+ * En los días de trabajo nos escapábamos un ratito: veíamos películas, comíamos
+ * botana y jugábamos juegos de mesa, una relación de amistad increible.Llegaban las vacaciones y el clásico ritual
+* era hacer videollamada por Meet. ¿Qué hacíamos? Me ponía mascarillas con ella,
+ * veíamos películas al mismo tiempo y jugábamos juegos de terror y mas.Tenía una personalidad increíble y una risa preciosa.
+ *
+ * Pero el sistema tenía una dependencia tóxica: ella cargaba con una pareja que
+ * la limitaba muchísimo y terminaban a cada rato; siento que eso influyó bastante, pero nunca quedo en mi.
+ * Con los meses me di cuenta del patrón crítico: si yo no le escribía, ella
+ * jamás me mandaba mensaje.Dejé pasar el tiempo a ver que pasaba pero...Diez meses de silencio absoluto.
+ *
+ * El tiempo corrió desde aquel inicio hasta después del 11 de octubre, día de la
+ * Carrera Quálitas (otra proyectada para más adelante, like para parte 2)
+ * Una semana después, tras volver a instalar Instagram pq se ponia personal e hizo lo que yo no puedo darme de baja, subí una nota "buen resultado pero la espinita siempre se queda" o algo asi ns
+ *Ella respondió con un emoji de cara preocupante o triste y lo único que dije "Hola, tiene mucho que no sabía
+ * de ti"... y desde entonces, fin de la ejecución. Jamás volvimos a hablar.
+ *
+ * Pero habia algo que yo no sabia, llegaria el Viernes 13 de Noviembre 2026, el tiempo paso y despues de 1 Mes...
+ * dos mensajes aparecieron en mi pantalla "Morar forever" "emoji calma/emoji calma"
+ * En ese momento me sentia faliz por la moratvibra pero algo en mi no queria dar mucha respuesta, pense...y si talvez quiere voler a hablar, pero algo en mi no sabia
+ *Y respondi...
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ *
+ * Fin del bloque.Así como murieron esas líneas de comunicación,
+ * murió toda interacción posible.
+ * =====================================================================
+ */

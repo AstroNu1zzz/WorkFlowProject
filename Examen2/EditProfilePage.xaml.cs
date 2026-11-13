@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using Examen2.Data;
 using Examen2.Services;
 using Examen2.ViewModels;
@@ -10,7 +9,6 @@ public partial class EditProfilePage : ContentPage
     private readonly DatabaseService _databaseService;
     private readonly EmailService _emailService;
     private readonly MainViewModel _mainViewModel;
-    private bool _isEmailVerified = false;
 
     public EditProfilePage(DatabaseService databaseService, EmailService emailService, MainViewModel mainViewModel)
     {
@@ -19,222 +17,91 @@ public partial class EditProfilePage : ContentPage
         _emailService = emailService;
         _mainViewModel = mainViewModel;
 
-        LoadCurrentProfile();
+        LoadUserData();
     }
 
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        LoadCurrentProfile();
-    }
-
-    private void LoadCurrentProfile()
+    private void LoadUserData()
     {
         var user = _mainViewModel?.CurrentUser;
         if (user != null)
         {
-            TxtUsername.Text = user.Username;
-            LblCurrentEmail.Text = user.Email;
-        }
-    }
+            TxtEditUsername.Text = user.Username;
+            TxtEditEmail.Text = user.Email;
 
-    // 1. ACTUALIZAR NOMBRE DE USUARIO
-    private async void OnUpdateUsernameClicked(object sender, EventArgs e)
-    {
-        string newUsername = TxtUsername.Text?.Trim();
-
-        if (string.IsNullOrWhiteSpace(newUsername) || newUsername.Length < 3 || newUsername.Length > 20)
-        {
-            await DisplayAlert("Error", "El nombre de usuario debe contener entre 3 y 20 caracteres.", "OK");
-            return;
-        }
-
-        if (!Regex.IsMatch(newUsername, @"^[a-zA-Z0-9_]+$"))
-        {
-            await DisplayAlert("Error", "El usuario solo puede contener letras, números y guiones bajos.", "OK");
-            return;
-        }
-
-        var user = _mainViewModel.CurrentUser;
-        user.Username = newUsername;
-
-        bool ok = await _databaseService.UpdateUserAsync(user);
-        if (ok)
-        {
-            await DisplayAlert("Éxito", "Nombre de usuario actualizado correctamente.", "OK");
-        }
-        else
-        {
-            await DisplayAlert("Error", "No se pudo actualizar el nombre de usuario.", "OK");
-        }
-    }
-
-    // 2. VERIFICAR CORREO MEDIANTE EMAILSERVICE Y TWOFACTORPAGE
-    private async void OnVerifyEmailClicked(object sender, EventArgs e)
-    {
-        if (_isEmailVerified)
-        {
-            await DisplayAlert("Información", "Tu correo ya se encuentra verificado.", "OK");
-            return;
-        }
-
-        var user = _mainViewModel.CurrentUser;
-        if (user == null) return;
-
-        string generatedCode = Random.Shared.Next(100000, 999999).ToString();
-
-        // CORRECCIÓN CS0029: Desestructurar la tupla (bool Success, string ErrorDetail)
-        var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email, generatedCode);
-        if (!sent)
-        {
-            await DisplayAlert("Error de Envío", $"No se pudo enviar el correo de verificación: {errorMsg}", "OK");
-            return;
-        }
-
-        await DisplayAlert("Correo Enviado", $"Hemos enviado un código de verificación de 6 dígitos a {user.Email}.", "OK");
-
-        await Navigation.PushAsync(new TwoFactorPage(
-            user,
-            generatedCode,
-            _databaseService,
-            _mainViewModel,
-            onSuccessCallback: async () =>
+            if (!string.IsNullOrWhiteSpace(user.Username))
             {
-                _isEmailVerified = true;
-                LblEmailVerifiedStatus.Text = "✓ Verificado";
-                LblEmailVerifiedStatus.TextColor = Color.FromArgb("#5EEAD4");
-                await DisplayAlert("Éxito", "Correo electrónico verificado correctamente.", "OK");
-            }));
-    }
+                LblEditInitial.Text = user.Username.Substring(0, 1).ToUpper();
+            }
 
-    // 3. CAMBIAR CORREO (SOLICITA CONTRASEÑA ACTUAL)
-    private async void OnChangeEmailClicked(object sender, EventArgs e)
-    {
-        var user = _mainViewModel.CurrentUser;
-        if (user == null) return;
-
-        string currentPasswordInput = await DisplayPromptAsync(
-            "Seguridad Requerida",
-            "Ingresa tu contraseña actual para cambiar el correo:",
-            accept: "Continuar",
-            cancel: "Cancelar",
-            placeholder: "••••••••");
-
-        if (string.IsNullOrEmpty(currentPasswordInput)) return;
-
-        if (currentPasswordInput != user.Password)
-        {
-            await DisplayAlert("Acceso Denegado", "La contraseña ingresada es incorrecta.", "OK");
-            return;
-        }
-
-        string newEmail = await DisplayPromptAsync(
-            "Nuevo Correo",
-            "Ingresa tu nuevo correo electrónico:",
-            accept: "Guardar",
-            cancel: "Cancelar",
-            placeholder: "ejemplo@correo.com",
-            keyboard: Keyboard.Email);
-
-        if (string.IsNullOrWhiteSpace(newEmail)) return;
-
-        if (!Regex.IsMatch(newEmail, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
-        {
-            await DisplayAlert("Error", "El correo ingresado no es válido.", "OK");
-            return;
-        }
-
-        user.Email = newEmail;
-        bool ok = await _databaseService.UpdateUserAsync(user);
-
-        if (ok)
-        {
-            LblCurrentEmail.Text = newEmail;
-            _isEmailVerified = false;
-            LblEmailVerifiedStatus.Text = "Sin verificar";
-            LblEmailVerifiedStatus.TextColor = Color.FromArgb("#F87171");
-            await DisplayAlert("Éxito", "Correo electrónico actualizado correctamente.", "OK");
-        }
-        else
-        {
-            await DisplayAlert("Error", "No se pudo actualizar el correo.", "OK");
-        }
-    }
-
-    // 4. CAMBIAR CONTRASEÑA ENVIANDO CÓDIGO REAL CON EMAILSERVICE
-    private async void OnChangePassword2FAClicked(object sender, EventArgs e)
-    {
-        var user = _mainViewModel.CurrentUser;
-        if (user == null) return;
-
-        string generatedCode = Random.Shared.Next(100000, 999999).ToString();
-
-        // CORRECCIÓN CS0029: Desestructurar la tupla (bool Success, string ErrorDetail)
-        var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email, generatedCode);
-        if (!sent)
-        {
-            await DisplayAlert("Error de Envío", $"No se pudo enviar el código 2FA: {errorMsg}", "OK");
-            return;
-        }
-
-        await DisplayAlert("Código Enviado", $"Se ha enviado un código de autenticación de 6 dígitos a tu correo ({user.Email}).", "OK");
-
-        await Navigation.PushAsync(new TwoFactorPage(
-            user,
-            generatedCode,
-            _databaseService,
-            _mainViewModel,
-            onSuccessCallback: async () =>
+            if (!string.IsNullOrWhiteSpace(user.ProfilePicturePath))
             {
-                await PromptNewPasswordAsync(user);
-            }));
+                ImgEditAvatar.Source = ImageSource.FromUri(new Uri(user.ProfilePicturePath));
+                ImgEditAvatar.IsVisible = true;
+                LblEditInitial.IsVisible = false;
+            }
+        }
     }
 
-    private async Task PromptNewPasswordAsync(User user)
+    private async void OnBackButtonClicked(object sender, EventArgs e)
     {
-        string newPassword = await DisplayPromptAsync(
-            "Nueva Contraseña",
-            "Ingresa tu nueva contraseña (mínimo 8 caracteres, mayúscula, número y símbolo):",
-            accept: "Siguiente",
-            cancel: "Cancelar",
-            placeholder: "••••••••");
+        await Navigation.PopAsync();
+    }
 
-        if (string.IsNullOrEmpty(newPassword)) return;
-
-        bool isLengthOk = newPassword.Length >= 8;
-        bool isUpperOk = Regex.IsMatch(newPassword, @"[A-Z]");
-        bool isNumberOk = Regex.IsMatch(newPassword, @"[0-9]");
-        bool isSpecialOk = Regex.IsMatch(newPassword, @"[@$!%*?&#._\-]");
-
-        if (!isLengthOk || !isUpperOk || !isNumberOk || !isSpecialOk)
+    private async void OnChangePhotoClicked(object sender, EventArgs e)
+    {
+        try
         {
-            await DisplayAlert("Contraseña Débil", "La contraseña debe contener mínimo 8 caracteres, una mayúscula, un número y un símbolo.", "OK");
+            var result = await MediaPicker.PickPhotoAsync(new MediaPickerOptions
+            {
+                Title = "Selecciona tu foto de perfil"
+            });
+
+            if (result != null)
+            {
+                var localFilePath = result.FullPath;
+                ImgEditAvatar.Source = ImageSource.FromFile(localFilePath);
+                ImgEditAvatar.IsVisible = true;
+                LblEditInitial.IsVisible = false;
+
+                if (_mainViewModel?.CurrentUser != null)
+                {
+                    _mainViewModel.CurrentUser.ProfilePicturePath = localFilePath;
+                    await _databaseService.UpdateUserAsync(_mainViewModel.CurrentUser);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            await DisplayAlert("Error", $"No se pudo cargar la imagen: {ex.Message}", "OK");
+        }
+    }
+
+    private async void OnSaveProfileClicked(object sender, EventArgs e)
+    {
+        string newUsername = TxtEditUsername.Text?.Trim();
+        string newEmail = TxtEditEmail.Text?.Trim();
+
+        if (string.IsNullOrEmpty(newUsername) || string.IsNullOrEmpty(newEmail))
+        {
+            await DisplayAlert("Campos vacíos", "Por favor completa todos los campos.", "OK");
             return;
         }
 
-        string confirmPassword = await DisplayPromptAsync(
-            "Confirmar Contraseña",
-            "Vuelve a ingresar la nueva contraseña:",
-            accept: "Cambiar",
-            cancel: "Cancelar",
-            placeholder: "••••••••");
-
-        if (newPassword != confirmPassword)
+        if (_mainViewModel?.CurrentUser != null)
         {
-            await DisplayAlert("Error", "Las contraseñas no coinciden.", "OK");
-            return;
-        }
+            _mainViewModel.CurrentUser.Username = newUsername;
+            _mainViewModel.CurrentUser.Email = newEmail;
 
-        user.Password = newPassword;
-        bool ok = await _databaseService.UpdateUserAsync(user);
-
-        if (ok)
-        {
-            await DisplayAlert("Éxito", "Tu contraseña ha sido actualizada correctamente.", "OK");
-        }
-        else
-        {
-            await DisplayAlert("Error", "No se pudo actualizar la contraseña en la base de datos.", "OK");
+            bool success = await _databaseService.UpdateUserAsync(_mainViewModel.CurrentUser);
+            if (success)
+            {
+                await DisplayAlert("Éxito", "Perfil actualizado correctamente.", "OK");
+                await Navigation.PopAsync();
+            }
+            else
+            {
+                await DisplayAlert("Error", "No se pudo actualizar el perfil en la base de datos.", "OK");
+            }
         }
     }
 }

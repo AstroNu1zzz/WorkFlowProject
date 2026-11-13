@@ -7,37 +7,234 @@
              BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
     <Grid RowDefinitions="Auto, *">
-        <Border Grid.Row="0" StrokeThickness="0" Padding="16,14" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-            <Label Text="Configuración" FontSize="18" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" VerticalOptions="Center" />
+
+        <!-- BARRA SUPERIOR PERSONALIZADA -->
+        <Border Grid.Row="0"
+                Padding="16,12"
+                StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+            <Border.Shadow>
+                <Shadow Brush="#000000" Opacity="0.06" Offset="0,2" Radius="6" />
+            </Border.Shadow>
+
+            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14" VerticalOptions="Center">
+                <ImageButton Grid.Column="0"
+                             Source="icon_arrow_back.png"
+                             WidthRequest="24"
+                             HeightRequest="24"
+                             BackgroundColor="Transparent"
+                             Clicked="OnBackButtonClicked" />
+
+                <Label Grid.Column="1"
+                       Text="Configuración"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+            </Grid>
         </Border>
 
-        <ScrollView Grid.Row="1" Padding="16">
-            <VerticalStackLayout Spacing="20" MaximumWidthRequest="600" HorizontalOptions="Center">
-                <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 16" Padding="16" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnProfileTapped" />
-                    </Border.GestureRecognizers>
-                    <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14">
-                        <Border Grid.Column="0" WidthRequest="50" HeightRequest="50" StrokeShape="RoundRectangle 25" StrokeThickness="0" BackgroundColor="#61E5CE">
-                            <Grid>
-                                <Image x:Name="ImgAvatar" Aspect="AspectFill" IsVisible="false" />
-                                <Label x:Name="LblAvatarInitial" Text="A" FontSize="20" FontAttributes="Bold" TextColor="#0F172A" HorizontalOptions="Center" VerticalOptions="Center" />
+        <!-- CONTENIDO DE CONFIGURACIÓN -->
+        <ScrollView Grid.Row="1" Padding="20">
+            <VerticalStackLayout Spacing="22" MaximumWidthRequest="600" HorizontalOptions="Center">
+
+                <!-- SECCIÓN 1: PERFIL (Toca para editar foto o nombre, correo de solo lectura) -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="PERFIL" FontSize="12" FontAttributes="Bold" TextColor="#5EEAD4" />
+
+                    <Border Padding="16"
+                            StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="OnEditProfileTapped" />
+                        </Border.GestureRecognizers>
+
+                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="14" VerticalOptions="Center">
+                            <Border Grid.Column="0"
+                                    WidthRequest="52"
+                                    HeightRequest="52"
+                                    StrokeShape="RoundRectangle 26"
+                                    StrokeThickness="0"
+                                    BackgroundColor="#5EEAD4">
+                                <Grid>
+                                    <Label x:Name="LblAvatarInitial"
+                                           Text="U"
+                                           FontSize="22"
+                                           FontAttributes="Bold"
+                                           TextColor="#0F172A"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center" />
+
+                                    <Image x:Name="ImgAvatar"
+                                           Aspect="AspectFill"
+                                           IsVisible="False"
+                                           WidthRequest="52"
+                                           HeightRequest="52" />
+                                </Grid>
+                            </Border>
+
+                            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                                <Label x:Name="LblUsername" Text="Cargando..." FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                <Label x:Name="LblEmail" Text="cargando@correo.com" FontSize="12" TextColor="#64748B" />
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="2" Text="✏️" FontSize="16" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- SECCIÓN 2: APARIENCIA -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="APARIENCIA" FontSize="12" FontAttributes="Bold" TextColor="#5EEAD4" />
+
+                    <Border Padding="16"
+                            StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                        <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="Modo Oscuro / Claro" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                <Label Text="Personaliza la apariencia visual de la aplicación." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                            </VerticalStackLayout>
+
+                            <Picker Grid.Column="1" 
+                                    x:Name="PickerTheme"
+                                    Title="Tema" 
+                                    WidthRequest="130" 
+                                    TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"
+                                    SelectedIndexChanged="OnThemeSelectedChanged">
+                                <Picker.ItemsSource>
+                                    <x:Array Type="{x:Type x:String}">
+                                        <x:String>Sistema</x:String>
+                                        <x:String>Claro</x:String>
+                                        <x:String>Oscuro</x:String>
+                                    </x:Array>
+                                </Picker.ItemsSource>
+                            </Picker>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- SECCIÓN 3: SEGURIDAD Y ACCESO -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="SEGURIDAD Y ACCESO" FontSize="12" FontAttributes="Bold" TextColor="#5EEAD4" />
+
+                    <VerticalStackLayout Spacing="10">
+                        <!-- 2FA -->
+                        <Border Padding="16"
+                                StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                                StrokeShape="RoundRectangle 16"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                            <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="Verificación de dos pasos (2FA)" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                    <Label Text="Solicitar código al iniciar sesión o cambiar credenciales." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                                </VerticalStackLayout>
+
+                                <Switch Grid.Column="1" x:Name="Switch2FA" IsToggled="True" OnColor="#5EEAD4" />
                             </Grid>
                         </Border>
-                        <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                            <Label x:Name="LblUsername" Text="Nombre de usuario" FontSize="16" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                            <Label x:Name="LblEmail" Text="correo@ejemplo.com" FontSize="13" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                        </VerticalStackLayout>
-                        <Label Grid.Column="2" Text="→" FontSize="18" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" VerticalOptions="Center" />
-                    </Grid>
-                </Border>
 
-                <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 16" Padding="16" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                    <VerticalStackLayout Spacing="14">
-                        <Label Text="Sesión" FontSize="14" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                        <Button Text="Cerrar Sesión" Clicked="OnLogoutClicked" BackgroundColor="{AppThemeBinding Light=#FEF2F2, Dark=#3F2020}" TextColor="#EF4444" FontAttributes="Bold" HeightRequest="45" CornerRadius="10" />
+                        <!-- CAMBIAR CONTRASEÑA -->
+                        <Border Padding="16"
+                                StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                                StrokeShape="RoundRectangle 16"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnChangePasswordTapped" />
+                            </Border.GestureRecognizers>
+                            <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="Cambiar contraseña" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                    <Label Text="Actualiza tu clave de acceso de forma segura." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                                </VerticalStackLayout>
+                                <Label Grid.Column="1" Text="🔒" FontSize="18" VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
                     </VerticalStackLayout>
-                </Border>
+                </VerticalStackLayout>
+
+                <!-- SECCIÓN 4: PREFERENCIAS -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="PREFERENCIAS" FontSize="12" FontAttributes="Bold" TextColor="#5EEAD4" />
+
+                    <VerticalStackLayout Spacing="10">
+                        <!-- NOTIFICACIONES -->
+                        <Border Padding="16"
+                                StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                                StrokeShape="RoundRectangle 16"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                            <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="Notificaciones por correo" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                    <Label Text="Recibir avisos sobre nuevas entregas y publicaciones." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                                </VerticalStackLayout>
+
+                                <Switch Grid.Column="1" IsToggled="True" OnColor="#5EEAD4" />
+                            </Grid>
+                        </Border>
+
+                        <!-- IDIOMA -->
+                        <Border Padding="16"
+                                StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                                StrokeShape="RoundRectangle 16"
+                                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                            <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="Idioma de la aplicación" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                    <Label Text="Selecciona tu idioma preferido." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                                </VerticalStackLayout>
+
+                                <Picker Grid.Column="1" Title="Idioma" WidthRequest="120" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" SelectedIndex="0">
+                                    <Picker.ItemsSource>
+                                        <x:Array Type="{x:Type x:String}">
+                                            <x:String>Español</x:String>
+                                            <x:String>English</x:String>
+                                        </x:Array>
+                                    </Picker.ItemsSource>
+                                </Picker>
+                            </Grid>
+                        </Border>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+
+                <!-- SECCIÓN 5: INFORMACIÓN -->
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="INFORMACIÓN" FontSize="12" FontAttributes="Bold" TextColor="#5EEAD4" />
+
+                    <Border Padding="16"
+                            StrokeThickness="1"
+                            Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                            StrokeShape="RoundRectangle 16"
+                            BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                        <Grid ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                            <VerticalStackLayout Spacing="2">
+                                <Label Text="WorkFlow para MAUI" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                <Label Text="Versión 1.0.0 (Supabase Cloud)" FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                            </VerticalStackLayout>
+
+                            <Label Grid.Column="1" Text="⚡" FontSize="22" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+
+                <!-- BOTÓN CERRAR SESIÓN -->
+                <Button Text="Cerrar Sesión"
+                        BackgroundColor="#EF4444"
+                        TextColor="White"
+                        FontAttributes="Bold"
+                        CornerRadius="12"
+                        HeightRequest="48"
+                        Margin="0,10,0,10"
+                        Clicked="OnLogoutClicked" />
+
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

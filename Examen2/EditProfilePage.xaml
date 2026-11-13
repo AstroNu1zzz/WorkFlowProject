@@ -3,40 +3,98 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="Examen2.EditProfilePage"
              Title="Editar Perfil"
+             NavigationPage.HasNavigationBar="False"
              BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
 
-    <ScrollView Padding="20">
-        <VerticalStackLayout Spacing="20" MaximumWidthRequest="600" HorizontalOptions="Center">
-            <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 16" Padding="20" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                <VerticalStackLayout Spacing="16">
-                    <Label Text="Información Personal" FontSize="16" FontAttributes="Bold" TextColor="#61E5CE" />
-                    <VerticalStackLayout Spacing="6">
-                        <Label Text="Nombre de usuario" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                        <Entry x:Name="TxtUsername" Placeholder="Tu nombre de usuario" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" PlaceholderColor="{AppThemeBinding Light=#CBD5E1, Dark=#475569}" />
-                    </VerticalStackLayout>
+    <Grid RowDefinitions="Auto, *">
 
-                    <Button Text="Actualizar Nombre de Usuario" Clicked="OnUpdateUsernameClicked" BackgroundColor="#61E5CE" TextColor="#0F172A" FontAttributes="Bold" HeightRequest="42" CornerRadius="10" />
+        <!-- BARRA SUPERIOR -->
+        <Border Grid.Row="0"
+                Padding="16,12"
+                StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14" VerticalOptions="Center">
+                <ImageButton Grid.Column="0"
+                             Source="icon_arrow_back.png"
+                             WidthRequest="24"
+                             HeightRequest="24"
+                             BackgroundColor="Transparent"
+                             Clicked="OnBackButtonClicked" />
 
-                    <VerticalStackLayout Spacing="8" Margin="0,10,0,0">
-                        <Label Text="Correo electrónico" FontSize="13" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                        <Label x:Name="LblCurrentEmail" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                        <Label x:Name="LblEmailVerifiedStatus" Text="Sin verificar" FontSize="12" FontAttributes="Bold" TextColor="#F87171" />
+                <Label Grid.Column="1"
+                       Text="Editar Perfil"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+            </Grid>
+        </Border>
 
-                        <Grid ColumnDefinitions="*, *" ColumnSpacing="10" Margin="0,4,0,0">
-                            <Button Grid.Column="0" Text="Verificar Correo" Clicked="OnVerifyEmailClicked" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#374151}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" HeightRequest="38" CornerRadius="8" />
-                            <Button Grid.Column="1" Text="Cambiar Correo" Clicked="OnChangeEmailClicked" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#374151}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" HeightRequest="38" CornerRadius="8" />
+        <!-- CONTENIDO DE EDICIÓN -->
+        <ScrollView Grid.Row="1" Padding="20">
+            <VerticalStackLayout Spacing="22" MaximumWidthRequest="500" HorizontalOptions="Center">
+
+                <!-- FOTO DE PERFIL Y CAMBIO -->
+                <VerticalStackLayout Spacing="12" HorizontalOptions="Center" Margin="0,10,0,10">
+                    <Border WidthRequest="90"
+                            HeightRequest="90"
+                            StrokeShape="RoundRectangle 45"
+                            StrokeThickness="2"
+                            Stroke="#5EEAD4"
+                            BackgroundColor="#1E2B3C"
+                            HorizontalOptions="Center">
+                        <Grid>
+                            <Label x:Name="LblEditInitial"
+                                   Text="U"
+                                   FontSize="32"
+                                   FontAttributes="Bold"
+                                   TextColor="White"
+                                   HorizontalOptions="Center"
+                                   VerticalOptions="Center" />
+                            <Image x:Name="ImgEditAvatar"
+                                   Aspect="AspectFill"
+                                   IsVisible="False" />
                         </Grid>
+                    </Border>
+
+                    <Button Text="📷 Cambiar foto de perfil"
+                            Clicked="OnChangePhotoClicked"
+                            BackgroundColor="Transparent"
+                            TextColor="#5EEAD4"
+                            FontAttributes="Bold"
+                            FontSize="13"
+                            Padding="0" />
+                </VerticalStackLayout>
+
+                <!-- CAMPOS DE DATOS -->
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Nombre de usuario" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtEditUsername"
+                               TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="6">
+                        <Label Text="Correo electrónico" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        <Entry x:Name="TxtEditEmail"
+                               Keyboard="Email"
+                               TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"
+                               BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}" />
                     </VerticalStackLayout>
                 </VerticalStackLayout>
-            </Border>
 
-            <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 16" Padding="20" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                <VerticalStackLayout Spacing="16">
-                    <Label Text="Seguridad y Contraseña" FontSize="16" FontAttributes="Bold" TextColor="#61E5CE" />
-                    <Label Text="Cambia tu contraseña de forma segura mediante un código de verificación enviado a tu correo." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                    <Button Text="Cambiar Contraseña (2FA)" Clicked="OnChangePassword2FAClicked" BackgroundColor="#61E5CE" TextColor="#0F172A" FontAttributes="Bold" HeightRequest="45" CornerRadius="10" />
-                </VerticalStackLayout>
-            </Border>
-        </VerticalStackLayout>
-    </ScrollView>
+                <!-- BOTÓN GUARDAR CAMBIOS -->
+                <Button Text="Guardar Cambios"
+                        Clicked="OnSaveProfileClicked"
+                        BackgroundColor="#5EEAD4"
+                        TextColor="#0F172A"
+                        FontAttributes="Bold"
+                        CornerRadius="12"
+                        HeightRequest="48"
+                        Margin="0,10,0,0" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
 </ContentPage>

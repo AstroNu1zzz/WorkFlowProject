@@ -11,6 +11,11 @@ public partial class ContentDetailPage : ContentPage
     private string _submissionFilePath;
     private FileResult _pickedFileResult;
 
+    // Propiedad auxiliar para verificar en tiempo real si la tarea ya venció
+    private bool IsTaskOverdue => _item.ItemType == "Tarea"
+                                  && _item.DueDate.HasValue
+                                  && DateTime.Now > _item.DueDate.Value;
+
     public ContentDetailPage(ClassContentItem item, DatabaseService databaseService, MainViewModel mainViewModel)
     {
         InitializeComponent();
@@ -36,7 +41,9 @@ public partial class ContentDetailPage : ContentPage
         {
             if (_item.DueDate.HasValue)
             {
-                LblDueDate.Text = $"Fecha de entrega: {_item.DueDate.Value:dd/MM/yyyy HH:mm}";
+                LblDueDate.Text = IsTaskOverdue
+                    ? $"Venció el: {_item.DueDate.Value:dd/MM/yyyy HH:mm}"
+                    : $"Fecha de entrega: {_item.DueDate.Value:dd/MM/yyyy HH:mm}";
                 LblDueDate.IsVisible = true;
             }
             BorderStudentSubmission.IsVisible = true;
@@ -71,8 +78,9 @@ public partial class ContentDetailPage : ContentPage
         if (_mainViewModel?.CurrentUser == null) return;
 
         var sub = await _databaseService.GetTaskSubmissionAsync(_item.Id, _mainViewModel.CurrentUser.Id);
+        bool hasSubmission = sub != null && !string.IsNullOrEmpty(sub.FilePath);
 
-        if (sub != null && !string.IsNullOrEmpty(sub.FilePath))
+        if (hasSubmission)
         {
             _submissionFilePath = sub.FilePath;
             LblSubmittedFileName.Text = Path.GetFileName(sub.FilePath);
@@ -80,9 +88,11 @@ public partial class ContentDetailPage : ContentPage
 
             if (sub.Grade.HasValue)
             {
+                // CASO 1: Ya entregada y calificada
                 LblSubmissionStatus.Text = "Calificado";
                 LblSubmissionStatus.TextColor = Color.FromArgb("#5EEAD4");
                 LblSubmissionStatusTop.Text = "Calificado";
+                LblSubmissionStatusTop.TextColor = Color.FromArgb("#5EEAD4");
 
                 BorderGradeBadge.IsVisible = true;
                 LblGradeScore.Text = $"{sub.Grade.Value} / 100";
@@ -103,11 +113,30 @@ public partial class ContentDetailPage : ContentPage
                 BtnSubmit.TextColor = Color.FromArgb("#94A3B8");
                 BtnAddFile.IsVisible = false;
             }
+            else if (IsTaskOverdue)
+            {
+                // CASO 2: Entregada en tiempo, pero el plazo ya cerró (bloquea anular entrega)
+                LblSubmissionStatus.Text = "Entregado (Plazo cerrado)";
+                LblSubmissionStatus.TextColor = Color.FromArgb("#5EEAD4");
+                LblSubmissionStatusTop.Text = "Entregado";
+                LblSubmissionStatusTop.TextColor = Color.FromArgb("#5EEAD4");
+
+                BorderGradeBadge.IsVisible = false;
+                BorderFeedback.IsVisible = false;
+
+                BtnSubmit.Text = "Plazo finalizado";
+                BtnSubmit.IsEnabled = false;
+                BtnSubmit.BackgroundColor = Color.FromArgb("#2D3748");
+                BtnSubmit.TextColor = Color.FromArgb("#94A3B8");
+                BtnAddFile.IsVisible = false;
+            }
             else
             {
+                // CASO 3: Entregada y aún dentro del plazo (permite anular)
                 LblSubmissionStatus.Text = "Entregado";
                 LblSubmissionStatus.TextColor = Color.FromArgb("#5EEAD4");
                 LblSubmissionStatusTop.Text = "Entregado";
+                LblSubmissionStatusTop.TextColor = Color.FromArgb("#5EEAD4");
 
                 BorderGradeBadge.IsVisible = false;
                 BorderFeedback.IsVisible = false;
@@ -123,23 +152,54 @@ public partial class ContentDetailPage : ContentPage
         {
             _submissionFilePath = null;
             LayoutStudentAttachment.IsVisible = false;
-            LblSubmissionStatus.Text = "Sin entregar";
-            LblSubmissionStatus.TextColor = Color.FromArgb("#EF4444");
-            LblSubmissionStatusTop.Text = "Asignada";
-
             BorderGradeBadge.IsVisible = false;
             BorderFeedback.IsVisible = false;
 
-            BtnSubmit.Text = "Entregar tarea";
-            BtnSubmit.IsEnabled = true;
-            BtnSubmit.BackgroundColor = Color.FromArgb("#5EEAD4");
-            BtnSubmit.TextColor = Color.FromArgb("#0F172A");
-            BtnAddFile.IsVisible = true;
+            if (IsTaskOverdue)
+            {
+                // CASO 4: NO entregada y fecha vencida (cierra controles)
+                LblSubmissionStatus.Text = "Sin entregar • Cerrada";
+                LblSubmissionStatus.TextColor = Color.FromArgb("#EF4444");
+                LblSubmissionStatusTop.Text = "Vencida";
+                LblSubmissionStatusTop.TextColor = Color.FromArgb("#EF4444");
+
+                BorderStudentSubmission.Stroke = Color.FromArgb("#EF4444");
+
+                BtnAddFile.IsVisible = false;
+                BtnAddFile.IsEnabled = false;
+
+                BtnSubmit.Text = "Tarea vencida";
+                BtnSubmit.IsEnabled = false;
+                BtnSubmit.BackgroundColor = Color.FromArgb("#EF4444");
+                BtnSubmit.TextColor = Colors.White;
+            }
+            else
+            {
+                // CASO 5: Pendiente y vigente
+                LblSubmissionStatus.Text = "Sin entregar";
+                LblSubmissionStatus.TextColor = Color.FromArgb("#EF4444");
+                LblSubmissionStatusTop.Text = "Asignada";
+                LblSubmissionStatusTop.TextColor = Color.FromArgb("#5EEAD4");
+
+                BtnSubmit.Text = "Entregar tarea";
+                BtnSubmit.IsEnabled = true;
+                BtnSubmit.BackgroundColor = Color.FromArgb("#5EEAD4");
+                BtnSubmit.TextColor = Color.FromArgb("#0F172A");
+                BtnAddFile.IsVisible = true;
+                BtnAddFile.IsEnabled = true;
+            }
         }
     }
 
     private async void OnAddFileClicked(object sender, EventArgs e)
     {
+        if (IsTaskOverdue)
+        {
+            await DisplayAlert("Tarea vencida", "El plazo de entrega ha finalizado y ya no se pueden adjuntar archivos.", "OK");
+            await LoadStudentSubmissionAsync();
+            return;
+        }
+
         try
         {
             var result = await FilePicker.Default.PickAsync();
@@ -221,7 +281,16 @@ public partial class ContentDetailPage : ContentPage
 
     private async void OnSubmitTaskClicked(object sender, EventArgs e)
     {
-        if (BtnSubmit.Text == "Tarea calificada") return;
+        if (BtnSubmit.Text == "Tarea calificada" || BtnSubmit.Text == "Tarea vencida" || BtnSubmit.Text == "Plazo finalizado")
+            return;
+
+        // Validación en tiempo real por si el reloj cruzó la hora límite mientras la pantalla estaba abierta
+        if (IsTaskOverdue)
+        {
+            await DisplayAlert("Plazo vencido", "El tiempo límite para esta tarea ha expirado.", "OK");
+            await LoadStudentSubmissionAsync();
+            return;
+        }
 
         if (BtnSubmit.Text == "Anular entrega")
         {
@@ -234,6 +303,7 @@ public partial class ContentDetailPage : ContentPage
             LblSubmissionStatus.Text = "Sin entregar";
             LblSubmissionStatus.TextColor = Color.FromArgb("#EF4444");
             LblSubmissionStatusTop.Text = "Asignada";
+            LblSubmissionStatusTop.TextColor = Color.FromArgb("#5EEAD4");
             BtnSubmit.Text = "Entregar tarea";
             BtnSubmit.BackgroundColor = Color.FromArgb("#5EEAD4");
             BtnSubmit.TextColor = Color.FromArgb("#0F172A");
@@ -284,17 +354,18 @@ public partial class ContentDetailPage : ContentPage
                 FilePath = publicUrl
             };
 
-            bool ok = await _databaseService.SaveTaskSubmissionAsync(sub);
+            var (ok, message) = await _databaseService.SaveTaskSubmissionAsync(sub);
             BtnSubmit.IsEnabled = true;
 
             if (ok)
             {
-                await DisplayAlert("Éxito", "Tarea entregada correctamente en la nube.", "OK");
+                await DisplayAlert("Éxito", message, "OK");
                 await LoadStudentSubmissionAsync();
             }
             else
             {
-                await DisplayAlert("Error", "No se pudo guardar la entrega en la base de datos.", "OK");
+                await DisplayAlert("No permitido", message, "OK");
+                await LoadStudentSubmissionAsync();
             }
         }
         catch (Exception ex)

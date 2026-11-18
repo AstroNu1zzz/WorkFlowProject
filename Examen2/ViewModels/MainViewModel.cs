@@ -456,6 +456,10 @@ namespace Examen2.ViewModels
 
             foreach (var a in activities)
             {
+                if (a.ItemType == "Tarea" && a.DueDate.HasValue && a.DueDate.Value < DateTime.Now)
+                {
+                    continue;
+                }
                 string gradient = "#5EEAD4";
 
                 if (a.ItemType == "Tarea")

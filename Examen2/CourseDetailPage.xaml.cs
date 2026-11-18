@@ -29,7 +29,15 @@ public class FeedPostViewModel
 
     public string DateFormatted => SourceItem.CreatedAt.ToString("dd 'de' MMM.");
     public bool IsAssignment => SourceItem.ItemType == "Tarea";
-    public string DueDateText => SourceItem.DueDate.HasValue ? $"Fecha de entrega: {SourceItem.DueDate.Value:dd/MM HH:mm}" : "";
+    public bool IsOverdue => SourceItem.ItemType == "Tarea"
+                         && SourceItem.DueDate.HasValue
+                         && SourceItem.DueDate.Value < DateTime.Now;
+
+    public string DueDateText => SourceItem.DueDate.HasValue
+        ? (IsOverdue
+            ? $"Vencida • {SourceItem.DueDate.Value:dd/MM HH:mm}"
+            : $"Fecha de entrega: {SourceItem.DueDate.Value:dd/MM HH:mm}")
+        : "";
     public string CommentsCountText => "Agregar un comentario de clase";
 
     public string IconSymbol => SourceItem.ItemType switch
@@ -259,6 +267,19 @@ public partial class CourseDetailPage : ContentPage
         }
 
         await Navigation.PushAsync(new ManageUnitsPage(Course.Id, _databaseService));
+    }
+
+    private async void OnOpenGradesClicked(object sender, EventArgs e)
+    {
+        EnsureServices();
+
+        if (_databaseService == null || _mainViewModel == null || Course == null)
+        {
+            await DisplayAlert("Error", "No se pudo cargar la información del curso.", "OK");
+            return;
+        }
+
+        await Navigation.PushAsync(new CourseGradesPage(Course, _databaseService, _mainViewModel, _isTeacher));
     }
 
     private async void OnAddTeacherClicked(object sender, EventArgs e)

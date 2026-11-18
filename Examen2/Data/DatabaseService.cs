@@ -517,9 +517,22 @@ namespace Examen2.Data
             return response.Models.FirstOrDefault();
         }
 
-        public async Task<bool> SaveTaskSubmissionAsync(TaskSubmission submission)
+        public async Task<(bool Success, string Message)> SaveTaskSubmissionAsync(TaskSubmission submission)
         {
             await InitAsync();
+
+            // 1. Verificar fecha límite de la tarea
+            var itemResponse = await _client.From<ClassContentItem>()
+                                            .Where(i => i.Id == submission.ContentItemId)
+                                            .Get();
+            var taskItem = itemResponse.Models.FirstOrDefault();
+
+            if (taskItem != null && taskItem.DueDate.HasValue && DateTime.Now > taskItem.DueDate.Value)
+            {
+                return (false, "El plazo de entrega ha vencido. Ya no se permiten envíos.");
+            }
+
+            // 2. Guardar o actualizar entrega si está en tiempo
             var existing = await GetTaskSubmissionAsync(submission.ContentItemId, submission.UserId);
 
             if (existing != null)
@@ -527,11 +540,11 @@ namespace Examen2.Data
                 existing.FilePath = submission.FilePath;
                 existing.SubmittedAt = DateTime.Now;
                 var updateResponse = await _client.From<TaskSubmission>().Update(existing);
-                return updateResponse.Models.Count > 0;
+                return (updateResponse.Models.Count > 0, "Entrega actualizada correctamente.");
             }
 
             var insertResponse = await _client.From<TaskSubmission>().Insert(submission);
-            return insertResponse.Models.Count > 0;
+            return (insertResponse.Models.Count > 0, "Tarea entregada correctamente.");
         }
     }
 }

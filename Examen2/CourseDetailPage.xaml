@@ -254,21 +254,36 @@
             <ScrollView x:Name="ViewTrabajos" IsVisible="False">
                 <VerticalStackLayout Spacing="16" Padding="16,16,16,24">
 
-                    <Grid ColumnDefinitions="*, Auto">
-                        <Label Text="Trabajos y Actividades" 
-                               FontSize="18" 
-                               FontAttributes="Bold" 
-                               TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" 
-                               VerticalOptions="Center" />
+                    <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="12" VerticalOptions="Center">
+
+                        <Label Grid.Column="0"
+                           Text="Trabajos y Actividades" 
+                           FontSize="18" 
+                           FontAttributes="Bold" 
+                           TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" 
+                           VerticalOptions="Center" />
+
+                        <Label Grid.Column="1"
+                           Text="📊 Calificaciones"
+                           FontSize="13"
+                           FontAttributes="Bold"
+                           TextColor="#5C93F9"
+                           VerticalOptions="Center">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnOpenGradesClicked" />
+                            </Label.GestureRecognizers>
+                        </Label>
 
                         <!-- Botón para administrar unidades (Visibilidad controlada en C#) -->
                         <Button x:Name="BtnManageUnits"
-                                Grid.Column="1"
-                                Text="⚙️ Unidades"
-                                FontSize="12"
-                                TextColor="#5EEAD4"
-                                BackgroundColor="Transparent"
-                                Clicked="OnManageUnitsClicked" />
+                            Grid.Column="2"
+                            Text="⚙️ Unidades"
+                            FontSize="12"
+                            TextColor="#5EEAD4"
+                            BackgroundColor="Transparent"
+                            Padding="0"
+                            VerticalOptions="Center"
+                            Clicked="OnManageUnitsClicked" />
                     </Grid>
 
                     <CollectionView x:Name="CvAssignmentsGrouped"

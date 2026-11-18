@@ -64,6 +64,65 @@ namespace Examen2.ViewModels
             set { _isDrawerVisible = value; OnPropertyChanged(); }
         }
 
+        // --- NAVEGACIÓN DE PESTAÑAS (TABS INFERIORES) ---
+        private string _activeTab = "Clases";
+        public bool IsClasesVisible => _activeTab == "Clases";
+        public bool IsTareasVisible => _activeTab == "Tareas";
+        public bool IsEnfoqueVisible => _activeTab == "Enfoque";
+        public bool IsCalendarioVisible => _activeTab == "Calendario";
+
+        public Color ClasesTabColor => IsClasesVisible ? Color.FromArgb("#5EEAD4") : Color.FromArgb("#64748B");
+        public Color ClasesIndicatorColor => IsClasesVisible ? Color.FromArgb("#5EEAD4") : Colors.Transparent;
+        public FontAttributes ClasesFontAttributes => IsClasesVisible ? FontAttributes.Bold : FontAttributes.None;
+
+        public Color TareasTabColor => IsTareasVisible ? Color.FromArgb("#5EEAD4") : Color.FromArgb("#64748B");
+        public Color TareasIndicatorColor => IsTareasVisible ? Color.FromArgb("#5EEAD4") : Colors.Transparent;
+        public FontAttributes TareasFontAttributes => IsTareasVisible ? FontAttributes.Bold : FontAttributes.None;
+
+        public Color EnfoqueTabColor => IsEnfoqueVisible ? Color.FromArgb("#5EEAD4") : Color.FromArgb("#64748B");
+        public Color EnfoqueIndicatorColor => IsEnfoqueVisible ? Color.FromArgb("#5EEAD4") : Colors.Transparent;
+        public FontAttributes EnfoqueFontAttributes => IsEnfoqueVisible ? FontAttributes.Bold : FontAttributes.None;
+
+        public Color CalendarioTabColor => IsCalendarioVisible ? Color.FromArgb("#5EEAD4") : Color.FromArgb("#64748B");
+        public Color CalendarioIndicatorColor => IsCalendarioVisible ? Color.FromArgb("#5EEAD4") : Colors.Transparent;
+        public FontAttributes CalendarioFontAttributes => IsCalendarioVisible ? FontAttributes.Bold : FontAttributes.None;
+
+        // --- TEMPORIZADOR POMODORO (MODO ENFOQUE) ---
+        private IDispatcherTimer _timer;
+        private int _remainingSeconds = 1500;
+        private bool _isTimerRunning;
+
+        private string _timerText = "25:00";
+        public string TimerText
+        {
+            get => _timerText;
+            set { _timerText = value; OnPropertyChanged(); }
+        }
+
+        private string _timerStatusText = "Listo para iniciar";
+        public string TimerStatusText
+        {
+            get => _timerStatusText;
+            set { _timerStatusText = value; OnPropertyChanged(); }
+        }
+
+        // --- CALENDARIO DINÁMICO ---
+        private int _currentMonthIndex = 11;
+        private int _currentYear = 2026;
+        private readonly string[] _monthNames = {
+            "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
+            "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
+        };
+
+        private string _currentMonthYearText = "Noviembre de 2026";
+        public string CurrentMonthYearText
+        {
+            get => _currentMonthYearText;
+            set { _currentMonthYearText = value; OnPropertyChanged(); }
+        }
+
+        public ObservableCollection<CalendarDayModel> CalendarDays { get; set; } = new();
+
         // --- PROPIEDADES DE LA INTERFAZ ---
         public ObservableCollection<Course> EnrolledCourses { get; set; }
         public string NextDeadlineMessage { get; set; }
@@ -84,6 +143,15 @@ namespace Examen2.ViewModels
         public ICommand AddCourseCommand { get; }
         public ICommand DeleteCourseCommand { get; }
         public ICommand OpenActivityCommand { get; }
+
+        // Nuevos comandos MVVM para Tabs, Temporizador y Calendario
+        public ICommand SelectTabCommand { get; }
+        public ICommand SetTimerMinutesCommand { get; }
+        public ICommand StartTimerCommand { get; }
+        public ICommand PauseTimerCommand { get; }
+        public ICommand ResetTimerCommand { get; }
+        public ICommand PreviousMonthCommand { get; }
+        public ICommand NextMonthCommand { get; }
 
         public MainViewModel(DatabaseService databaseService, EmailService emailService)
         {
@@ -112,6 +180,16 @@ namespace Examen2.ViewModels
             AddCourseCommand = new Command(OnAddCourse);
             DeleteCourseCommand = new Command<Course>(OnDeleteCourse);
 
+            // Inicialización de comandos MVVM migrados
+            SelectTabCommand = new Command<string>(OnSelectTab);
+            SetTimerMinutesCommand = new Command<string>(OnSetTimerMinutes);
+            StartTimerCommand = new Command(OnStartTimer);
+            PauseTimerCommand = new Command(OnPauseTimer);
+            ResetTimerCommand = new Command(OnResetTimer);
+            PreviousMonthCommand = new Command(OnPreviousMonth);
+            NextMonthCommand = new Command(OnNextMonth);
+
+            LoadCalendarDays();
             _ = LoadCoursesAsync();
         }
 
@@ -126,20 +204,164 @@ namespace Examen2.ViewModels
             UpdateProfileImageState();
         }
 
-        private void LoadProfilePicture()
+        // --- LÓGICA DE PESTAÑAS ---
+        private void OnSelectTab(string tabName)
         {
-            if (CurrentUser != null && !string.IsNullOrEmpty(CurrentUser.ProfilePicturePath) && File.Exists(CurrentUser.ProfilePicturePath))
+            _activeTab = tabName;
+
+            OnPropertyChanged(nameof(IsClasesVisible));
+            OnPropertyChanged(nameof(IsTareasVisible));
+            OnPropertyChanged(nameof(IsEnfoqueVisible));
+            OnPropertyChanged(nameof(IsCalendarioVisible));
+
+            OnPropertyChanged(nameof(ClasesTabColor));
+            OnPropertyChanged(nameof(ClasesIndicatorColor));
+            OnPropertyChanged(nameof(ClasesFontAttributes));
+
+            OnPropertyChanged(nameof(TareasTabColor));
+            OnPropertyChanged(nameof(TareasIndicatorColor));
+            OnPropertyChanged(nameof(TareasFontAttributes));
+
+            OnPropertyChanged(nameof(EnfoqueTabColor));
+            OnPropertyChanged(nameof(EnfoqueIndicatorColor));
+            OnPropertyChanged(nameof(EnfoqueFontAttributes));
+
+            OnPropertyChanged(nameof(CalendarioTabColor));
+            OnPropertyChanged(nameof(CalendarioIndicatorColor));
+            OnPropertyChanged(nameof(CalendarioFontAttributes));
+
+            if (IsCalendarioVisible) LoadCalendarDays();
+        }
+
+        // --- LÓGICA DEL TEMPORIZADOR POMODORO ---
+        private void OnSetTimerMinutes(string minutesParam)
+        {
+            if (int.TryParse(minutesParam, out int minutes))
             {
-                ProfileImageSource = ImageSource.FromFile(CurrentUser.ProfilePicturePath);
-                HasProfilePicture = true;
-            }
-            else
-            {
-                ProfileImageSource = null;
-                HasProfilePicture = false;
+                _remainingSeconds = minutes * 60;
+                _timer?.Stop();
+                _isTimerRunning = false;
+                TimerStatusText = "Listo para iniciar";
+                UpdateTimerDisplay();
             }
         }
 
+        private void OnStartTimer()
+        {
+            if (_timer == null && Application.Current != null)
+            {
+                _timer = Application.Current.Dispatcher.CreateTimer();
+                _timer.Interval = TimeSpan.FromSeconds(1);
+                _timer.Tick += (s, e) =>
+                {
+                    if (_remainingSeconds > 0)
+                    {
+                        _remainingSeconds--;
+                        UpdateTimerDisplay();
+                    }
+                    else
+                    {
+                        _timer.Stop();
+                        _isTimerRunning = false;
+                        TimerStatusText = "¡Tiempo cumplido! 🎉";
+                        Application.Current?.MainPage?.DisplayAlert("Modo Enfoque", "¡Excelente trabajo! Has completado tu sesión de concentración.", "OK");
+                    }
+                };
+            }
+
+            if (!_isTimerRunning)
+            {
+                _isTimerRunning = true;
+                TimerStatusText = "En curso 🚀";
+                _timer?.Start();
+            }
+        }
+
+        private void OnPauseTimer()
+        {
+            if (_timer != null && _isTimerRunning)
+            {
+                _timer.Stop();
+                _isTimerRunning = false;
+                TimerStatusText = "Pausado ⏸️";
+            }
+        }
+
+        private void OnResetTimer()
+        {
+            _timer?.Stop();
+            _isTimerRunning = false;
+            _remainingSeconds = 1500;
+            TimerStatusText = "Listo para iniciar";
+            UpdateTimerDisplay();
+        }
+
+        private void UpdateTimerDisplay()
+        {
+            int minutes = _remainingSeconds / 60;
+            int seconds = _remainingSeconds % 60;
+            TimerText = $"{minutes:D2}:{seconds:D2}";
+        }
+
+        // --- LÓGICA DEL CALENDARIO ---
+        private void OnPreviousMonth()
+        {
+            _currentMonthIndex--;
+            if (_currentMonthIndex < 1)
+            {
+                _currentMonthIndex = 12;
+                _currentYear--;
+            }
+            LoadCalendarDays();
+        }
+
+        private void OnNextMonth()
+        {
+            _currentMonthIndex++;
+            if (_currentMonthIndex > 12)
+            {
+                _currentMonthIndex = 1;
+                _currentYear++;
+            }
+            LoadCalendarDays();
+        }
+
+        public void LoadCalendarDays()
+        {
+            CurrentMonthYearText = $"{_monthNames[_currentMonthIndex - 1]} de {_currentYear}";
+
+            int daysInMonth = DateTime.DaysInMonth(_currentYear, _currentMonthIndex);
+            var firstDayOfWeek = (int)new DateTime(_currentYear, _currentMonthIndex, 1).DayOfWeek;
+
+            CalendarDays.Clear();
+
+            for (int i = 0; i < firstDayOfWeek; i++)
+            {
+                CalendarDays.Add(new CalendarDayModel { DayNumber = 0, HasTask = false });
+            }
+
+            for (int day = 1; day <= daysInMonth; day++)
+            {
+                bool hasTask = false;
+                string taskColor = "Transparent";
+
+                if (_currentYear == 2026 && _currentMonthIndex == 11)
+                {
+                    if (day == 7) { hasTask = true; taskColor = "#5EEAD4"; }
+                    if (day == 8) { hasTask = true; taskColor = "#5C93F9"; }
+                    if (day == 10) { hasTask = true; taskColor = "#86EFAC"; }
+                }
+
+                CalendarDays.Add(new CalendarDayModel
+                {
+                    DayNumber = day,
+                    HasTask = hasTask,
+                    TaskIndicatorColor = taskColor
+                });
+            }
+        }
+
+        // --- GESTIÓN DE FOTO DE PERFIL ---
         private async void OnChangeProfilePicture()
         {
             IsProfileMenuVisible = false;
@@ -216,6 +438,7 @@ namespace Examen2.ViewModels
 
         public async Task RefreshCoursesAsync()
         {
+            LoadCalendarDays();
             if (CurrentUser == null) return;
 
             var courses = await _databaseService.GetCoursesAsync(CurrentUser.Id);
@@ -228,14 +451,12 @@ namespace Examen2.ViewModels
             var activities = await _databaseService.GetGlobalActivitiesAsync(CurrentUser.Id);
             GlobalRecentActivities.Clear();
 
-            // Usamos un contador para alternar los 3 colores vibrantes en las tareas
             int colorIndex = 0;
             string[] vibrantColors = { "#5EEAD4", "#5C93F9", "#86EFAC" };
 
             foreach (var a in activities)
             {
-                // Asignación de colores vibrantes
-                string gradient = "#5EEAD4"; // Color por defecto
+                string gradient = "#5EEAD4";
 
                 if (a.ItemType == "Tarea")
                 {
@@ -244,11 +465,11 @@ namespace Examen2.ViewModels
                 }
                 else if (a.ItemType == "Material")
                 {
-                    gradient = "#5EEAD4"; // Turquesa
+                    gradient = "#5EEAD4";
                 }
-                else // Anuncio u otros
+                else
                 {
-                    gradient = "#86EFAC"; // Verde vibrante
+                    gradient = "#86EFAC";
                 }
 
                 string icon = a.ItemType switch
@@ -388,7 +609,6 @@ namespace Examen2.ViewModels
 
             foreach (var a in activities)
             {
-                // Asignación de colores vibrantes
                 string gradient = "#5EEAD4";
 
                 if (a.ItemType == "Tarea")
@@ -518,49 +738,16 @@ namespace Examen2.ViewModels
             Name = name;
         }
     }
-}
 
-/*
- * 
- * Y al final, después de tantas iteraciones y refactorizaciones,
- * hemos llegado a estas últimas líneas de código.
- * Exactamente igual como acabó mi historia con ella...
- *
- * Todo empezó por allá a mis 16 años, a finales de Julio, en aquella
- * época trabajaba durante las vacaciones como becario en una empresa.Ahí conocí a Linda Villanueva.
- * Al principio pensé que me llevaría mejor con su hermana, pero con el tiempo
- * descubrimos una conexión única: los mismos gustos, una risa hermosa y una gran vibra
- * y congeniábamos bastante bien, pero como saber que no todo seria perfecto...
- *
- * En los días de trabajo nos escapábamos un ratito: veíamos películas, comíamos
- * botana y jugábamos juegos de mesa, una relación de amistad increible.Llegaban las vacaciones y el clásico ritual
-* era hacer videollamada por Meet. ¿Qué hacíamos? Me ponía mascarillas con ella,
- * veíamos películas al mismo tiempo y jugábamos juegos de terror y mas.Tenía una personalidad increíble y una risa preciosa.
- *
- * Pero el sistema tenía una dependencia tóxica: ella cargaba con una pareja que
- * la limitaba muchísimo y terminaban a cada rato; siento que eso influyó bastante, pero nunca quedo en mi.
- * Con los meses me di cuenta del patrón crítico: si yo no le escribía, ella
- * jamás me mandaba mensaje.Dejé pasar el tiempo a ver que pasaba pero...Diez meses de silencio absoluto.
- *
- * El tiempo corrió desde aquel inicio hasta después del 11 de octubre, día de la
- * Carrera Quálitas (otra proyectada para más adelante, like para parte 2)
- * Una semana después, tras volver a instalar Instagram pq se ponia personal e hizo lo que yo no puedo darme de baja, subí una nota "buen resultado pero la espinita siempre se queda" o algo asi ns
- *Ella respondió con un emoji de cara preocupante o triste y lo único que dije "Hola, tiene mucho que no sabía
- * de ti"... y desde entonces, fin de la ejecución. Jamás volvimos a hablar.
- *
- * Pero habia algo que yo no sabia, llegaria el Viernes 13 de Noviembre 2026, el tiempo paso y despues de 1 Mes...
- * dos mensajes aparecieron en mi pantalla "Morar forever" "emoji calma/emoji calma"
- * En ese momento me sentia faliz por la moratvibra pero algo en mi no queria dar mucha respuesta, pense...y si talvez quiere voler a hablar, pero algo en mi no sabia
- *Y respondi...
- *
- *
- *
- *
- *
- *
- *
- *
- * Fin del bloque.Así como murieron esas líneas de comunicación,
- * murió toda interacción posible.
- * =====================================================================
- */
+    public class CalendarDayModel
+    {
+        public int DayNumber { get; set; }
+        public string DayNumberText => DayNumber > 0 ? DayNumber.ToString() : string.Empty;
+        public bool HasTask { get; set; }
+        public string TaskIndicatorColor { get; set; } = "Transparent";
+        public double BorderThickness => HasTask ? 1.5 : 1.0;
+        public string BorderColor => HasTask ? TaskIndicatorColor : "#2D3748";
+        public FontAttributes DayFontAttributes => HasTask ? FontAttributes.Bold : FontAttributes.None;
+        public Color DayTextColor => HasTask ? Colors.White : Color.FromArgb("#64748B");
+    }
+}

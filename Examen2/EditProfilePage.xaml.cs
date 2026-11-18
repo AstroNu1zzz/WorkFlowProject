@@ -35,6 +35,17 @@ public partial class EditProfilePage : ContentPage
         {
             TxtUsername.Text = user.Username;
             LblCurrentEmail.Text = user.Email;
+
+            if (user.IsEmailVerified)
+            {
+                LblEmailVerifiedStatus.Text = "✓ Verificado";
+                LblEmailVerifiedStatus.TextColor = Color.FromArgb("#5EEAD4");
+            }
+            else
+            {
+                LblEmailVerifiedStatus.Text = "Sin verificar";
+                LblEmailVerifiedStatus.TextColor = Color.FromArgb("#F87171");
+            }
         }
     }
 
@@ -72,18 +83,17 @@ public partial class EditProfilePage : ContentPage
     // 2. VERIFICAR CORREO MEDIANTE EMAILSERVICE Y TWOFACTORPAGE
     private async void OnVerifyEmailClicked(object sender, EventArgs e)
     {
-        if (_isEmailVerified)
+        var user = _mainViewModel?.CurrentUser;
+        if (user == null) return;
+
+        if (user.IsEmailVerified)
         {
             await DisplayAlert("Información", "Tu correo ya se encuentra verificado.", "OK");
             return;
         }
 
-        var user = _mainViewModel.CurrentUser;
-        if (user == null) return;
-
         string generatedCode = Random.Shared.Next(100000, 999999).ToString();
 
-        // CORRECCIÓN CS0029: Desestructurar la tupla (bool Success, string ErrorDetail)
         var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email, generatedCode);
         if (!sent)
         {
@@ -100,10 +110,20 @@ public partial class EditProfilePage : ContentPage
             _mainViewModel,
             onSuccessCallback: async () =>
             {
-                _isEmailVerified = true;
-                LblEmailVerifiedStatus.Text = "✓ Verificado";
-                LblEmailVerifiedStatus.TextColor = Color.FromArgb("#5EEAD4");
-                await DisplayAlert("Éxito", "Correo electrónico verificado correctamente.", "OK");
+                user.IsEmailVerified = true;
+                bool saved = await _databaseService.UpdateUserAsync(user);
+
+                if (saved)
+                {
+                    LblEmailVerifiedStatus.Text = "✓ Verificado";
+                    LblEmailVerifiedStatus.TextColor = Color.FromArgb("#5EEAD4");
+                    await DisplayAlert("Éxito", "Correo electrónico verificado y guardado correctamente.", "OK");
+                }
+                else
+                {
+                    user.IsEmailVerified = false;
+                    await DisplayAlert("Error", "Se validó el código, pero no se pudo guardar en la base de datos.", "OK");
+                }
             }));
     }
 
@@ -145,12 +165,12 @@ public partial class EditProfilePage : ContentPage
         }
 
         user.Email = newEmail;
+        user.IsEmailVerified = false; // <--- Reiniciar en el modelo antes de guardar
         bool ok = await _databaseService.UpdateUserAsync(user);
 
         if (ok)
         {
             LblCurrentEmail.Text = newEmail;
-            _isEmailVerified = false;
             LblEmailVerifiedStatus.Text = "Sin verificar";
             LblEmailVerifiedStatus.TextColor = Color.FromArgb("#F87171");
             await DisplayAlert("Éxito", "Correo electrónico actualizado correctamente.", "OK");

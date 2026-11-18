@@ -91,7 +91,7 @@
         <Grid Grid.Row="1">
 
             <!-- VISTA 1: CLASES Y NOVEDADES -->
-            <ScrollView x:Name="ViewClases" IsVisible="True">
+            <ScrollView IsVisible="{Binding IsClasesVisible}">
                 <VerticalStackLayout Spacing="24" Padding="0,16,0,100">
 
                     <!-- MIS CLASES INSCRITAS -->
@@ -119,8 +119,6 @@
                             <CollectionView.ItemsLayout>
                                 <LinearItemsLayout Orientation="Horizontal" ItemSpacing="14" />
                             </CollectionView.ItemsLayout>
-
-                            <!-- Restaurados del código antiguo para centrar las tarjetas -->
 
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
@@ -243,7 +241,7 @@
             </ScrollView>
 
             <!-- VISTA 2: TAREAS PENDIENTES -->
-            <ScrollView x:Name="ViewTareas" IsVisible="False">
+            <ScrollView IsVisible="{Binding IsTareasVisible}">
                 <VerticalStackLayout Spacing="16" Padding="20,16,20,100">
                     <Label Text="Tareas Pendientes"
                            FontSize="18"
@@ -293,7 +291,7 @@
             </ScrollView>
 
             <!-- VISTA 3: MODO ENFOQUE (POMODORO) -->
-            <ScrollView x:Name="ViewEnfoque" IsVisible="False">
+            <ScrollView IsVisible="{Binding IsEnfoqueVisible}">
                 <VerticalStackLayout Spacing="20" Padding="20,16,20,100" MaximumWidthRequest="600" HorizontalOptions="Center">
                     <VerticalStackLayout Spacing="4">
                         <Label Text="Modo Enfoque" FontSize="20" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
@@ -308,23 +306,23 @@
                             </VerticalStackLayout>
 
                             <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
-                                <Button Text="15m" Clicked="OnSet15MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
-                                <Button Text="25m" Clicked="OnSet25MinutesClicked" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
-                                <Button Text="45m" Clicked="OnSet45MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
-                                <Button Text="60m" Clicked="OnSet60MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button Text="15m" Command="{Binding SetTimerMinutesCommand}" CommandParameter="15" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button Text="25m" Command="{Binding SetTimerMinutesCommand}" CommandParameter="25" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button Text="45m" Command="{Binding SetTimerMinutesCommand}" CommandParameter="45" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button Text="60m" Command="{Binding SetTimerMinutesCommand}" CommandParameter="60" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
                             </HorizontalStackLayout>
 
                             <Border WidthRequest="180" HeightRequest="180" StrokeShape="RoundRectangle 90" StrokeThickness="3" Stroke="#5EEAD4" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#12161A}" HorizontalOptions="Center">
                                 <VerticalStackLayout VerticalOptions="Center" Spacing="4">
-                                    <Label x:Name="LblTimer" Text="25:00" FontSize="36" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" HorizontalOptions="Center" />
-                                    <Label x:Name="LblTimerStatus" Text="Listo para iniciar" FontSize="11" TextColor="#5EEAD4" HorizontalOptions="Center" />
+                                    <Label Text="{Binding TimerText}" FontSize="36" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" HorizontalOptions="Center" />
+                                    <Label Text="{Binding TimerStatusText}" FontSize="11" TextColor="#5EEAD4" HorizontalOptions="Center" />
                                 </VerticalStackLayout>
                             </Border>
 
                             <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" WidthRequest="320" HorizontalOptions="Center">
-                                <Button Grid.Column="0" x:Name="BtnStartTimer" Text="Iniciar" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" Clicked="OnStartTimerClicked" />
-                                <Button Grid.Column="1" Text="Pausar" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" Clicked="OnPauseTimerClicked" />
-                                <Button Grid.Column="2" Text="Reiniciar" BackgroundColor="#EF4444" TextColor="White" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" Clicked="OnResetTimerClicked" />
+                                <Button Grid.Column="0" Text="Iniciar" Command="{Binding StartTimerCommand}" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" />
+                                <Button Grid.Column="1" Text="Pausar" Command="{Binding PauseTimerCommand}" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" />
+                                <Button Grid.Column="2" Text="Reiniciar" Command="{Binding ResetTimerCommand}" BackgroundColor="#EF4444" TextColor="White" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" />
                             </Grid>
                         </VerticalStackLayout>
                     </Border>
@@ -342,15 +340,15 @@
             </ScrollView>
 
             <!-- VISTA 4: CALENDARIO DE ENTREGAS DINÁMICO -->
-            <ScrollView x:Name="ViewCalendario" IsVisible="False">
+            <ScrollView IsVisible="{Binding IsCalendarioVisible}">
                 <VerticalStackLayout Spacing="16" Padding="16,16,16,100">
                     <Grid ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
-                        <Button Grid.Column="0" Text="◀" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" Clicked="OnPreviousMonthClicked" />
+                        <Button Grid.Column="0" Text="◀" Command="{Binding PreviousMonthCommand}" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" />
                         <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
-                            <Label x:Name="LblMonthYear" Text="Noviembre de 2026" FontSize="17" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                            <Label Text="{Binding CurrentMonthYearText}" FontSize="17" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                             <Label Text="Agenda de Entregas Programadas" FontSize="11" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
                         </VerticalStackLayout>
-                        <Button Grid.Column="2" Text="▶" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" Clicked="OnNextMonthClicked" />
+                        <Button Grid.Column="2" Text="▶" Command="{Binding NextMonthCommand}" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" />
                     </Grid>
 
                     <Grid ColumnDefinitions="*,*,*,*,*,*,*" Margin="0,4">
@@ -363,7 +361,7 @@
                         <Label Grid.Column="6" Text="S" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
                     </Grid>
 
-                    <CollectionView x:Name="CalendarCollectionView" SelectionMode="None">
+                    <CollectionView ItemsSource="{Binding CalendarDays}" SelectionMode="None">
                         <CollectionView.ItemsLayout>
                             <GridItemsLayout Orientation="Vertical" Span="7" VerticalItemSpacing="8" HorizontalItemSpacing="6" />
                         </CollectionView.ItemsLayout>
@@ -410,37 +408,37 @@
             <Grid ColumnDefinitions="*, *, *, *">
                 <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
                     <Label Text="📚" FontSize="18" HorizontalOptions="Center" />
-                    <Label x:Name="TabClasesLabel" Text="Clases" FontSize="11" FontAttributes="Bold" TextColor="#5EEAD4" HorizontalOptions="Center" />
-                    <BoxView x:Name="TabClasesIndicator" HeightRequest="3" WidthRequest="24" Color="#5EEAD4" CornerRadius="1.5" />
+                    <Label Text="Clases" FontSize="11" FontAttributes="{Binding ClasesFontAttributes}" TextColor="{Binding ClasesTabColor}" HorizontalOptions="Center" />
+                    <BoxView HeightRequest="3" WidthRequest="24" Color="{Binding ClasesIndicatorColor}" CornerRadius="1.5" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnTabClasesTapped" />
+                        <TapGestureRecognizer Command="{Binding SelectTabCommand}" CommandParameter="Clases" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center">
                     <Label Text="📋" FontSize="18" HorizontalOptions="Center" />
-                    <Label x:Name="TabTareasLabel" Text="Tareas" FontSize="11" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
-                    <BoxView x:Name="TabTareasIndicator" HeightRequest="3" WidthRequest="24" Color="Transparent" CornerRadius="1.5" />
+                    <Label Text="Tareas" FontSize="11" FontAttributes="{Binding TareasFontAttributes}" TextColor="{Binding TareasTabColor}" HorizontalOptions="Center" />
+                    <BoxView HeightRequest="3" WidthRequest="24" Color="{Binding TareasIndicatorColor}" CornerRadius="1.5" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnTabTareasTapped" />
+                        <TapGestureRecognizer Command="{Binding SelectTabCommand}" CommandParameter="Tareas" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="2" Spacing="2" HorizontalOptions="Center">
                     <Label Text="⏰" FontSize="18" HorizontalOptions="Center" />
-                    <Label x:Name="TabEnfoqueLabel" Text="Enfoque" FontSize="11" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
-                    <BoxView x:Name="TabEnfoqueIndicator" HeightRequest="3" WidthRequest="24" Color="Transparent" CornerRadius="1.5" />
+                    <Label Text="Enfoque" FontSize="11" FontAttributes="{Binding EnfoqueFontAttributes}" TextColor="{Binding EnfoqueTabColor}" HorizontalOptions="Center" />
+                    <BoxView HeightRequest="3" WidthRequest="24" Color="{Binding EnfoqueIndicatorColor}" CornerRadius="1.5" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnTabEnfoqueTapped" />
+                        <TapGestureRecognizer Command="{Binding SelectTabCommand}" CommandParameter="Enfoque" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
                 <VerticalStackLayout Grid.Column="3" Spacing="2" HorizontalOptions="Center">
                     <Label Text="📅" FontSize="18" HorizontalOptions="Center" />
-                    <Label x:Name="TabCalendarioLabel" Text="Calendario" FontSize="11" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
-                    <BoxView x:Name="TabCalendarioIndicator" HeightRequest="3" WidthRequest="24" Color="Transparent" CornerRadius="1.5" />
+                    <Label Text="Calendario" FontSize="11" FontAttributes="{Binding CalendarioFontAttributes}" TextColor="{Binding CalendarioTabColor}" HorizontalOptions="Center" />
+                    <BoxView HeightRequest="3" WidthRequest="24" Color="{Binding CalendarioIndicatorColor}" CornerRadius="1.5" />
                     <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnTabCalendarioTapped" />
+                        <TapGestureRecognizer Command="{Binding SelectTabCommand}" CommandParameter="Calendario" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
             </Grid>

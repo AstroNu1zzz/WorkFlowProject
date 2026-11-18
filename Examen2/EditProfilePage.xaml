@@ -34,7 +34,7 @@
                 <VerticalStackLayout Spacing="16">
                     <Label Text="Seguridad y Contraseña" FontSize="16" FontAttributes="Bold" TextColor="#61E5CE" />
                     <Label Text="Cambia tu contraseña de forma segura mediante un código de verificación enviado a tu correo." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                    <Button Text="Cambiar Contraseña (2FA)" Clicked="OnChangePassword2FAClicked" BackgroundColor="#61E5CE" TextColor="#0F172A" FontAttributes="Bold" HeightRequest="45" CornerRadius="10" />
+                    <Button Text="Cambiar Contraseña" Clicked="OnChangePassword2FAClicked" BackgroundColor="#61E5CE" TextColor="#0F172A" FontAttributes="Bold" HeightRequest="45" CornerRadius="10" />
                 </VerticalStackLayout>
             </Border>
         </VerticalStackLayout>

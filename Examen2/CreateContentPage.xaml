@@ -24,7 +24,10 @@
                     <VerticalStackLayout x:Name="LayoutCriterionPicker" Spacing="6">
                         <Label x:Name="LblActiveUnitName" Text="Unidad Activa" FontSize="12" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
                         <Label x:Name="LblCriterionWarning" Text="Aviso de criterio" FontSize="11" TextColor="#EF4444" IsVisible="false" />
-                        <Picker x:Name="PickerCriteria" Title="Seleccionar criterio" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                        <Picker x:Name="PickerCriteria"
+        Title="Seleccionar criterio"
+        ItemDisplayBinding="{Binding Name}"
+        TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                     </VerticalStackLayout>
 
                     <VerticalStackLayout x:Name="LayoutDueDate" Spacing="6">

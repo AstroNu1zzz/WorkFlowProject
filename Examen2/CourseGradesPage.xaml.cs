@@ -1,15 +1,58 @@
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Examen2.Data;
 using Examen2.ViewModels;
 
 namespace Examen2;
+
+public class CriterionBreakdownModel
+{
+    public string CriterionSummary { get; set; }
+    public string EarnedPointsText { get; set; }
+}
+
+public class StudentTaskDetailModel
+{
+    public string TaskTitle { get; set; }
+    public string CriterionTag { get; set; }
+    public string StatusText { get; set; }
+    public Color StatusTextColor { get; set; }
+    public Color StatusBadgeBg { get; set; }
+}
+
+public class StudentUnitGradeModel : INotifyPropertyChanged
+{
+    public string StudentName { get; set; }
+    public string FinalScoreText { get; set; }
+    public List<CriterionBreakdownModel> CriteriaBreakdown { get; set; } = new();
+    public List<StudentTaskDetailModel> Tasks { get; set; } = new();
+
+    private bool _isExpanded;
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set
+        {
+            _isExpanded = value;
+            OnPropertyChanged();
+            OnPropertyChanged(nameof(ToggleButtonText));
+        }
+    }
+
+    public string ToggleButtonText => IsExpanded ? "Ocultar ▲" : "Ver más ▼";
+
+    public event PropertyChangedEventHandler PropertyChanged;
+    protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+}
 
 public class UnitGradeDisplayModel
 {
     public string UnitTitle { get; set; }
     public string StatusText { get; set; }
     public Color StatusColor { get; set; }
-    public string FinalGradeText { get; set; }
-    public string CriteriaBreakdown { get; set; }
+    public string HeaderBadgeText { get; set; }
+    public List<StudentUnitGradeModel> Students { get; set; } = new();
 }
 
 public partial class CourseGradesPage : ContentPage
@@ -34,89 +77,53 @@ public partial class CourseGradesPage : ContentPage
         await LoadUnitGradesAsync();
     }
 
+    private void OnToggleStudentDetailsClicked(object sender, EventArgs e)
+    {
+        if (sender is Button btn && btn.BindingContext is StudentUnitGradeModel studentModel)
+        {
+            studentModel.IsExpanded = !studentModel.IsExpanded;
+        }
+    }
+
     private async Task LoadUnitGradesAsync()
     {
         if (_mainViewModel?.CurrentUser == null) return;
 
         var units = await _databaseService.GetCourseUnitsAsync(_course.Id);
         var allItems = await _databaseService.GetCourseContentItemsAsync(_course.Id);
+
+        // Si es profesor trae todos los alumnos; si es alumno solo se evalúa a sí mismo
+        var targetStudents = _isTeacher
+            ? await _databaseService.GetCourseStudentsAsync(_course.Id)
+            : new List<User> { _mainViewModel.CurrentUser };
+
         var displayList = new List<UnitGradeDisplayModel>();
 
-        if (_isTeacher)
+        foreach (var unit in units)
         {
-            // VISTA PROFESOR: Resumen de todos los alumnos inscritos por cada unidad
-            var students = await _databaseService.GetCourseStudentsAsync(_course.Id);
+            bool isFinished = DateTime.Now > unit.EndDate;
+            var criteria = await _databaseService.GetUnitCriteriaAsync(unit.Id);
+            var unitTasks = allItems.Where(i => i.ItemType == "Tarea" &&
+                (i.UnitId == unit.Id || (i.CreatedAt.Date >= unit.StartDate.Date && i.CreatedAt.Date <= unit.EndDate.Date))).ToList();
 
-            foreach (var unit in units)
+            var studentModels = new List<StudentUnitGradeModel>();
+            double classSum = 0;
+
+            foreach (var student in targetStudents)
             {
-                bool isFinished = DateTime.Now > unit.EndDate;
-                var criteria = await _databaseService.GetUnitCriteriaAsync(unit.Id);
-                var unitTasks = allItems.Where(i => i.ItemType == "Tarea" &&
-                    (i.UnitId == unit.Id || (i.CreatedAt.Date >= unit.StartDate.Date && i.CreatedAt.Date <= unit.EndDate.Date))).ToList();
+                double studentTotal = 0;
+                var breakdownList = new List<CriterionBreakdownModel>();
+                var taskDetailList = new List<StudentTaskDetailModel>();
 
-                var studentLines = new List<string>();
-                double classSum = 0;
-
-                foreach (var student in students)
+                // Precargar entregas del alumno para todas las tareas de esta unidad
+                var studentSubmissions = new Dictionary<int, TaskSubmission>();
+                foreach (var task in unitTasks)
                 {
-                    double studentTotal = 0;
-
-                    foreach (var crit in criteria)
-                    {
-                        var matchingTasks = unitTasks.Where(t =>
-                            t.CriterionId == crit.Id ||
-                            (!t.CriterionId.HasValue && t.Title.Contains(crit.Name, StringComparison.OrdinalIgnoreCase))
-                        ).ToList();
-
-                        double avgScore = 0;
-                        if (matchingTasks.Count > 0)
-                        {
-                            var scores = new List<double>();
-                            foreach (var task in matchingTasks)
-                            {
-                                var sub = await _databaseService.GetTaskSubmissionAsync(task.Id, student.Id);
-                                scores.Add(sub?.Grade ?? 0);
-                            }
-                            avgScore = scores.Average();
-                        }
-
-                        studentTotal += (avgScore * crit.Percentage) / 100.0;
-                    }
-
-                    classSum += studentTotal;
-                    string studentName = !string.IsNullOrWhiteSpace(student.Username) ? student.Username : student.Email;
-                    studentLines.Add($"👤 {studentName}: {studentTotal:F1} / 100");
+                    var sub = await _databaseService.GetTaskSubmissionAsync(task.Id, student.Id);
+                    studentSubmissions[task.Id] = sub;
                 }
 
-                double classAvg = students.Count > 0 ? classSum / students.Count : 0;
-
-                displayList.Add(new UnitGradeDisplayModel
-                {
-                    UnitTitle = unit.Title,
-                    StatusText = isFinished
-                        ? $"Unidad cerrada ({unit.EndDate:dd/MM/yyyy})"
-                        : $"En curso • Cierra el {unit.EndDate:dd/MM/yyyy}",
-                    StatusColor = isFinished ? Color.FromArgb("#5EEAD4") : Color.FromArgb("#F59E0B"),
-                    FinalGradeText = $"Prom: {classAvg:F1}",
-                    CriteriaBreakdown = studentLines.Count > 0
-                        ? string.Join("\n", studentLines)
-                        : "Aún no hay alumnos inscritos en este curso."
-                });
-            }
-        }
-        else
-        {
-            // VISTA ALUMNO: Desglose individual por criterio de evaluación
-            foreach (var unit in units)
-            {
-                bool isFinished = DateTime.Now > unit.EndDate;
-                var criteria = await _databaseService.GetUnitCriteriaAsync(unit.Id);
-                var unitTasks = allItems.Where(i => i.ItemType == "Tarea" &&
-                    (i.UnitId == unit.Id || (i.CreatedAt.Date >= unit.StartDate.Date && i.CreatedAt.Date <= unit.EndDate.Date))).ToList();
-
-                double totalWeightedScore = 0;
-                var breakdownLines = new List<string>();
-
+                // 1. Calcular el desglose por cada criterio de la unidad
                 foreach (var crit in criteria)
                 {
                     var matchingTasks = unitTasks.Where(t =>
@@ -127,33 +134,119 @@ public partial class CourseGradesPage : ContentPage
                     double avgScore = 0;
                     if (matchingTasks.Count > 0)
                     {
-                        var scores = new List<double>();
-                        foreach (var task in matchingTasks)
-                        {
-                            var sub = await _databaseService.GetTaskSubmissionAsync(task.Id, _mainViewModel.CurrentUser.Id);
-                            scores.Add(sub?.Grade ?? 0);
-                        }
-                        avgScore = scores.Average();
+                        avgScore = matchingTasks.Select(t => studentSubmissions[t.Id]?.Grade ?? 0).Average();
                     }
 
                     double weightedPoints = (avgScore * crit.Percentage) / 100.0;
-                    totalWeightedScore += weightedPoints;
-                    breakdownLines.Add($"• {crit.Name} ({crit.Percentage}%): {avgScore:F1}/100 → +{weightedPoints:F1} pts");
+                    studentTotal += weightedPoints;
+
+                    breakdownList.Add(new CriterionBreakdownModel
+                    {
+                        CriterionSummary = $"• {crit.Name} ({crit.Percentage}%): Prom. {avgScore:F1}/100 ({matchingTasks.Count} tarea(s))",
+                        EarnedPointsText = $"+{weightedPoints:F1} pts"
+                    });
                 }
 
-                displayList.Add(new UnitGradeDisplayModel
+                if (criteria.Count == 0)
                 {
-                    UnitTitle = unit.Title,
-                    StatusText = isFinished
-                        ? $"Unidad finalizada ({unit.EndDate:dd/MM/yyyy})"
-                        : $"En curso • Cierra el {unit.EndDate:dd/MM/yyyy}",
-                    StatusColor = isFinished ? Color.FromArgb("#5EEAD4") : Color.FromArgb("#F59E0B"),
-                    FinalGradeText = isFinished ? $"{totalWeightedScore:F1} / 100" : $"{totalWeightedScore:F1} (Parcial)",
-                    CriteriaBreakdown = breakdownLines.Count > 0
-                        ? string.Join("\n", breakdownLines)
-                        : "Sin criterios de evaluación configurados en esta unidad."
+                    breakdownList.Add(new CriterionBreakdownModel
+                    {
+                        CriterionSummary = "No hay criterios de evaluación configurados para esta unidad.",
+                        EarnedPointsText = "0.0 pts"
+                    });
+                }
+
+                // 2. Construir la lista individual de tareas de la unidad y su criterio asociado
+                foreach (var task in unitTasks)
+                {
+                    var matchedCrit = criteria.FirstOrDefault(c =>
+                        task.CriterionId == c.Id ||
+                        (!task.CriterionId.HasValue && task.Title.Contains(c.Name, StringComparison.OrdinalIgnoreCase)));
+
+                    string critLabel = matchedCrit != null
+                        ? $"Criterio: {matchedCrit.Name} ({matchedCrit.Percentage}%)"
+                        : "Sin criterio asignado (no suma al promedio)";
+
+                    var sub = studentSubmissions[task.Id];
+                    bool hasSubmitted = sub != null && !string.IsNullOrEmpty(sub.FilePath);
+                    bool isOverdue = task.DueDate.HasValue && DateTime.Now > task.DueDate.Value;
+
+                    string statusText;
+                    Color textColor;
+                    Color badgeBg;
+
+                    if (hasSubmitted && sub.Grade.HasValue)
+                    {
+                        statusText = $"Calificada: {sub.Grade.Value:F1} / 100";
+                        textColor = Color.FromArgb("#5EEAD4");
+                        badgeBg = Color.FromArgb("#132A2B");
+                    }
+                    else if (hasSubmitted)
+                    {
+                        statusText = "Entregada (Sin calificar)";
+                        textColor = Color.FromArgb("#60A5FA");
+                        badgeBg = Color.FromArgb("#1E3A8A");
+                    }
+                    else if (isOverdue)
+                    {
+                        statusText = "Vencida • Sin entregar (0)";
+                        textColor = Color.FromArgb("#F87171");
+                        badgeBg = Color.FromArgb("#450A0A");
+                    }
+                    else
+                    {
+                        statusText = "Pendiente de entrega";
+                        textColor = Color.FromArgb("#FBBF24");
+                        badgeBg = Color.FromArgb("#451A03");
+                    }
+
+                    taskDetailList.Add(new StudentTaskDetailModel
+                    {
+                        TaskTitle = task.Title,
+                        CriterionTag = critLabel,
+                        StatusText = statusText,
+                        StatusTextColor = textColor,
+                        StatusBadgeBg = badgeBg
+                    });
+                }
+
+                if (unitTasks.Count == 0)
+                {
+                    taskDetailList.Add(new StudentTaskDetailModel
+                    {
+                        TaskTitle = "Sin tareas registradas",
+                        CriterionTag = "No se asignaron actividades en esta unidad",
+                        StatusText = "—",
+                        StatusTextColor = Color.FromArgb("#94A3B8"),
+                        StatusBadgeBg = Color.FromArgb("#1E293B")
+                    });
+                }
+
+                classSum += studentTotal;
+                string studentName = !string.IsNullOrWhiteSpace(student.Username) ? student.Username : student.Email;
+
+                studentModels.Add(new StudentUnitGradeModel
+                {
+                    StudentName = studentName,
+                    FinalScoreText = $"{studentTotal:F1} / 100",
+                    CriteriaBreakdown = breakdownList,
+                    Tasks = taskDetailList,
+                    IsExpanded = !_isTeacher // Si es alumno, aparece desplegado por defecto
                 });
             }
+
+            double classAvg = targetStudents.Count > 0 ? classSum / targetStudents.Count : 0;
+
+            displayList.Add(new UnitGradeDisplayModel
+            {
+                UnitTitle = unit.Title,
+                StatusText = isFinished
+                    ? $"Unidad cerrada ({unit.EndDate:dd/MM/yyyy})"
+                    : $"En curso • Cierra el {unit.EndDate:dd/MM/yyyy}",
+                StatusColor = isFinished ? Color.FromArgb("#5EEAD4") : Color.FromArgb("#F59E0B"),
+                HeaderBadgeText = _isTeacher ? $"Prom. Grupo: {classAvg:F1}" : $"Total: {classAvg:F1} / 100",
+                Students = studentModels
+            });
         }
 
         CvUnitGrades.ItemsSource = displayList;

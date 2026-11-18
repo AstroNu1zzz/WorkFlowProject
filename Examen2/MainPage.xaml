@@ -40,13 +40,13 @@
                        VerticalOptions="Center" />
 
                 <HorizontalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
-                    <Label Text="Work" 
-                           FontSize="22" 
-                           FontAttributes="Bold" 
+                    <Label Text="Work"
+                           FontSize="22"
+                           FontAttributes="Bold"
                            TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                    <Label Text="Flow" 
-                           FontSize="22" 
-                           FontAttributes="Bold" 
+                    <Label Text="Flow"
+                           FontSize="22"
+                           FontAttributes="Bold"
                            TextColor="#5EEAD4" />
                 </HorizontalStackLayout>
 
@@ -114,17 +114,13 @@
                         <CollectionView ItemsSource="{Binding EnrolledCourses}"
                                         SelectionMode="None"
                                         HeightRequest="150"
-                                        HorizontalScrollBarVisibility="Never">
+                                        HorizontalScrollBarVisibility="Never"
+                                        Margin="14">
                             <CollectionView.ItemsLayout>
                                 <LinearItemsLayout Orientation="Horizontal" ItemSpacing="14" />
                             </CollectionView.ItemsLayout>
 
-                            <CollectionView.Header>
-                                <BoxView WidthRequest="14" Color="Transparent" />
-                            </CollectionView.Header>
-                            <CollectionView.Footer>
-                                <BoxView WidthRequest="14" Color="Transparent" />
-                            </CollectionView.Footer>
+                            <!-- Restaurados del código antiguo para centrar las tarjetas -->
 
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
@@ -135,7 +131,7 @@
                                             StrokeShape="RoundRectangle 18"
                                             Shadow="{StaticResource CardShadow}">
                                         <Border.GestureRecognizers>
-                                            <TapGestureRecognizer 
+                                            <TapGestureRecognizer
                                                 Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.OpenCourseCommand}"
                                                 CommandParameter="{Binding .}" />
                                         </Border.GestureRecognizers>
@@ -157,9 +153,9 @@
 
                                                 <Grid Padding="16" RowDefinitions="*, Auto">
                                                     <VerticalStackLayout Grid.Row="0" Spacing="2">
-                                                        <Label Text="{Binding CourseName}" 
-                                                               FontSize="16" 
-                                                               FontAttributes="Bold" 
+                                                        <Label Text="{Binding CourseName}"
+                                                               FontSize="16"
+                                                               FontAttributes="Bold"
                                                                TextColor="White"
                                                                LineBreakMode="TailTruncation" />
                                                     </VerticalStackLayout>
@@ -178,7 +174,7 @@
                         </CollectionView>
                     </VerticalStackLayout>
 
-                    <!-- TABLÓN DE NOVEDADES GLOBAL -->
+                    <!-- TABLÓN DE NOVEDADES GLOBAL (Con bordes de colores) -->
                     <VerticalStackLayout Spacing="12" Padding="20,0">
                         <Label Text="Tablón de Novedades"
                                FontSize="17"
@@ -191,52 +187,51 @@
                                     <Border StrokeThickness="1"
                                             Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
                                             StrokeShape="RoundRectangle 14"
-                                            Padding="16"
+                                            Padding="0"
                                             BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}"
                                             Shadow="{StaticResource CardShadow}">
 
                                         <Border.GestureRecognizers>
-                                            <TapGestureRecognizer 
+                                            <TapGestureRecognizer
                                                 Command="{Binding Source={x:Reference mainPage}, Path=BindingContext.OpenActivityCommand}"
                                                 CommandParameter="{Binding .}" />
                                         </Border.GestureRecognizers>
 
-                                        <Grid ColumnDefinitions="Auto, *" ColumnSpacing="14" RowDefinitions="Auto, Auto">
-                                            <Border Grid.Row="0" Grid.Column="0"
-                                                    WidthRequest="40"
-                                                    HeightRequest="40"
-                                                    StrokeShape="RoundRectangle 20"
-                                                    StrokeThickness="0"
-                                                    BackgroundColor="{Binding GradientStartColor}">
-                                                <Label Text="{Binding IconString}" 
-                                                       FontSize="18" 
-                                                       HorizontalOptions="Center" 
-                                                       VerticalOptions="Center" />
-                                            </Border>
+                                        <Grid ColumnDefinitions="6, *" ColumnSpacing="12">
+                                            <BoxView Grid.Column="0"
+                                                     BackgroundColor="{Binding GradientStartColor}"
+                                                     VerticalOptions="Fill" />
 
-                                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
-                                                <Label Text="{Binding DisplayTitle}"
-                                                       FontSize="14"
-                                                       FontAttributes="Bold"
-                                                       TextColor="{AppThemeBinding Light=#1E293B, Dark=#F8FAFC}" />
-                                                <Label Text="{Binding Subtitle}"
-                                                       FontSize="12"
-                                                       TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                                            </VerticalStackLayout>
-
-                                            <HorizontalStackLayout Grid.Row="1" Grid.Column="1" 
-                                                                    Margin="0,8,0,0" 
-                                                                    IsVisible="{Binding HasDueDate}">
-                                                <Border Padding="8,3"
+                                            <Grid Grid.Column="1" ColumnDefinitions="Auto, *" ColumnSpacing="14" RowDefinitions="Auto, Auto" Padding="12,16,16,16">
+                                                <Border Grid.Row="0" Grid.Column="0"
+                                                        WidthRequest="40"
+                                                        HeightRequest="40"
+                                                        StrokeShape="RoundRectangle 20"
                                                         StrokeThickness="0"
-                                                        StrokeShape="RoundRectangle 6"
-                                                        BackgroundColor="{AppThemeBinding Light=#FEE2E2, Dark=#382020}">
-                                                    <Label Text="{Binding DueDateString}"
-                                                           FontSize="11"
-                                                           FontAttributes="Bold"
-                                                           TextColor="#F87171" />
+                                                        BackgroundColor="{Binding GradientStartColor}">
+                                                    <Label Text="{Binding IconString}"
+                                                           FontSize="18"
+                                                           TextColor="#0F172A"
+                                                           HorizontalOptions="Center"
+                                                           VerticalOptions="Center" />
                                                 </Border>
-                                            </HorizontalStackLayout>
+
+                                                <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
+                                                    <Label Text="{Binding DisplayTitle}"
+                                                           FontSize="14"
+                                                           FontAttributes="Bold"
+                                                           TextColor="{AppThemeBinding Light=#1E293B, Dark=#F8FAFC}" />
+                                                    <Label Text="{Binding Subtitle}"
+                                                           FontSize="12"
+                                                           TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                                                </VerticalStackLayout>
+
+                                                <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" IsVisible="{Binding HasDueDate}">
+                                                    <Border Padding="8,3" StrokeThickness="0" StrokeShape="RoundRectangle 6" BackgroundColor="{AppThemeBinding Light=#FEE2E2, Dark=#382020}">
+                                                        <Label Text="{Binding DueDateString}" FontSize="11" FontAttributes="Bold" TextColor="#F87171" />
+                                                    </Border>
+                                                </HorizontalStackLayout>
+                                            </Grid>
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
@@ -259,25 +254,36 @@
                            FontSize="13"
                            TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
 
-                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding GlobalRecentActivities}" Spacing="10">
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding GlobalRecentActivities}" Spacing="12">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate>
-                                <Border Padding="14"
-                                        StrokeThickness="1"
+                                <Border StrokeThickness="1"
                                         Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
-                                        StrokeShape="RoundRectangle 12"
-                                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                                        StrokeShape="RoundRectangle 14"
+                                        Padding="0"
+                                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}"
+                                        Shadow="{StaticResource CardShadow}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding Source={x:Reference mainPage}, Path=BindingContext.OpenActivityCommand}" CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
 
-                                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12">
-                                        <Label Text="{Binding IconString}" FontSize="22" VerticalOptions="Center"/>
-                                        <VerticalStackLayout Grid.Column="1" Spacing="2">
-                                            <Label Text="{Binding DisplayTitle}" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"/>
-                                            <Label Text="{Binding Subtitle}" FontSize="12" TextColor="#64748B"/>
-                                            <Label Text="{Binding DueDateString}" FontSize="11" TextColor="#EF4444" IsVisible="{Binding HasDueDate}" Margin="0,2,0,0"/>
-                                        </VerticalStackLayout>
+                                    <Grid ColumnDefinitions="6, *" ColumnSpacing="12">
+                                        <BoxView Grid.Column="0" BackgroundColor="{Binding GradientStartColor}" VerticalOptions="Fill" />
+
+                                        <Grid Grid.Column="1" ColumnDefinitions="Auto, *" ColumnSpacing="14" RowDefinitions="Auto, Auto" Padding="12,16,16,16">
+                                            <Border Grid.Row="0" Grid.Column="0" WidthRequest="40" HeightRequest="40" StrokeShape="RoundRectangle 20" StrokeThickness="0" BackgroundColor="{Binding GradientStartColor}">
+                                                <Label Text="{Binding IconString}" FontSize="18" TextColor="#0F172A" HorizontalOptions="Center" VerticalOptions="Center" />
+                                            </Border>
+                                            <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="2">
+                                                <Label Text="{Binding DisplayTitle}" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"/>
+                                                <Label Text="{Binding Subtitle}" FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}"/>
+                                            </VerticalStackLayout>
+                                            <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Margin="0,8,0,0" IsVisible="{Binding HasDueDate}">
+                                                <Border Padding="8,3" StrokeThickness="0" StrokeShape="RoundRectangle 6" BackgroundColor="{AppThemeBinding Light=#FEE2E2, Dark=#382020}">
+                                                    <Label Text="{Binding DueDateString}" FontSize="11" FontAttributes="Bold" TextColor="#F87171"/>
+                                                </Border>
+                                            </HorizontalStackLayout>
+                                        </Grid>
                                     </Grid>
                                 </Border>
                             </DataTemplate>
@@ -286,24 +292,67 @@
                 </VerticalStackLayout>
             </ScrollView>
 
-            <!-- VISTA 3: CALENDARIO DE ENTREGAS -->
+            <!-- VISTA 3: MODO ENFOQUE (POMODORO) -->
+            <ScrollView x:Name="ViewEnfoque" IsVisible="False">
+                <VerticalStackLayout Spacing="20" Padding="20,16,20,100" MaximumWidthRequest="600" HorizontalOptions="Center">
+                    <VerticalStackLayout Spacing="4">
+                        <Label Text="Modo Enfoque" FontSize="20" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                        <Label Text="Maximiza tu rendimiento académico sin distracciones." FontSize="13" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                    </VerticalStackLayout>
+
+                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 20" Padding="24" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                        <VerticalStackLayout Spacing="18" HorizontalOptions="Center">
+                            <VerticalStackLayout Spacing="4" HorizontalOptions="Center">
+                                <Label Text="⏱️ Temporizador Pomodoro" FontSize="16" FontAttributes="Bold" TextColor="#5EEAD4" HorizontalOptions="Center" />
+                                <Label Text="Elige tu tiempo de alta concentración" FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+
+                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                                <Button Text="15m" Clicked="OnSet15MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button Text="25m" Clicked="OnSet25MinutesClicked" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button Text="45m" Clicked="OnSet45MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button Text="60m" Clicked="OnSet60MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                            </HorizontalStackLayout>
+
+                            <Border WidthRequest="180" HeightRequest="180" StrokeShape="RoundRectangle 90" StrokeThickness="3" Stroke="#5EEAD4" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#12161A}" HorizontalOptions="Center">
+                                <VerticalStackLayout VerticalOptions="Center" Spacing="4">
+                                    <Label x:Name="LblTimer" Text="25:00" FontSize="36" FontAttributes="Bold" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" HorizontalOptions="Center" />
+                                    <Label x:Name="LblTimerStatus" Text="Listo para iniciar" FontSize="11" TextColor="#5EEAD4" HorizontalOptions="Center" />
+                                </VerticalStackLayout>
+                            </Border>
+
+                            <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" WidthRequest="320" HorizontalOptions="Center">
+                                <Button Grid.Column="0" x:Name="BtnStartTimer" Text="Iniciar" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" Clicked="OnStartTimerClicked" />
+                                <Button Grid.Column="1" Text="Pausar" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" Clicked="OnPauseTimerClicked" />
+                                <Button Grid.Column="2" Text="Reiniciar" BackgroundColor="#EF4444" TextColor="White" FontAttributes="Bold" CornerRadius="10" HeightRequest="44" Clicked="OnResetTimerClicked" />
+                            </Grid>
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Border StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeShape="RoundRectangle 16" Padding="16" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                        <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
+                            <Label Grid.Column="0" Text="💡" FontSize="22" VerticalOptions="Center" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                <Label Text="Beneficio Académico" FontAttributes="Bold" FontSize="14" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                <Label Text="Al activar el Modo Enfoque, las notificaciones no urgentes se pausan durante el tiempo seleccionado para garantizar tu concentración total." FontSize="12" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </VerticalStackLayout>
+            </ScrollView>
+
+            <!-- VISTA 4: CALENDARIO DE ENTREGAS DINÁMICO -->
             <ScrollView x:Name="ViewCalendario" IsVisible="False">
                 <VerticalStackLayout Spacing="16" Padding="16,16,16,100">
-
-                    <Label Text="Agenda de Entregas"
-                           FontSize="18"
-                           FontAttributes="Bold"
-                           HorizontalOptions="Center"
-                           TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-
-                    <!-- ENCABEZADO Y MES -->
-                    <Grid ColumnDefinitions="Auto, *, Auto">
-                        <Button Grid.Column="0" Text="◀" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" />
-                        <Label Grid.Column="1" Text="Noviembre de 2026" FontSize="16" FontAttributes="Bold" HorizontalOptions="Center" VerticalOptions="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                        <Button Grid.Column="2" Text="▶" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" />
+                    <Grid ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
+                        <Button Grid.Column="0" Text="◀" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" Clicked="OnPreviousMonthClicked" />
+                        <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                            <Label x:Name="LblMonthYear" Text="Noviembre de 2026" FontSize="17" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                            <Label Text="Agenda de Entregas Programadas" FontSize="11" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        </VerticalStackLayout>
+                        <Button Grid.Column="2" Text="▶" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" Clicked="OnNextMonthClicked" />
                     </Grid>
 
-                    <!-- CABECERA DÍAS SEMANA -->
                     <Grid ColumnDefinitions="*,*,*,*,*,*,*" Margin="0,4">
                         <Label Grid.Column="0" Text="D" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
                         <Label Grid.Column="1" Text="L" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
@@ -314,220 +363,86 @@
                         <Label Grid.Column="6" Text="S" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
                     </Grid>
 
-                    <!-- MATRIZ DE DÍAS -->
-                    <Grid ColumnDefinitions="*,*,*,*,*,*,*" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="6" ColumnSpacing="6">
-                        <!-- Fila 1 -->
-                        <Border Grid.Row="0" Grid.Column="0" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="1" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="0" Grid.Column="1" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="2" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="0" Grid.Column="2" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="3" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="0" Grid.Column="3" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="4" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="0" Grid.Column="4" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="5" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="0" Grid.Column="5" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="6" Margin="6" FontSize="12"/>
-                        </Border>
-
-                        <!-- Día 7 con Barrita de Tarea -->
-                        <Border Grid.Row="0" Grid.Column="6" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1.5" Stroke="#5EEAD4" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Grid RowDefinitions="*, Auto">
-                                <Label Text="7" Margin="6" FontSize="12" FontAttributes="Bold"/>
-                                <BoxView Grid.Row="1" HeightRequest="4" CornerRadius="2" Color="#5EEAD4" Margin="4,0,4,4"/>
-                            </Grid>
-                        </Border>
-
-                        <!-- Fila 2 (Día 8 y 10 con barrita) -->
-                        <Border Grid.Row="1" Grid.Column="0" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1.5" Stroke="#5EEAD4" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Grid RowDefinitions="*, Auto">
-                                <Label Text="8" Margin="6" FontSize="12" FontAttributes="Bold"/>
-                                <BoxView Grid.Row="1" HeightRequest="4" CornerRadius="2" Color="#5EEAD4" Margin="4,0,4,4"/>
-                            </Grid>
-                        </Border>
-                        <Border Grid.Row="1" Grid.Column="1" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="9" Margin="6" FontSize="12"/>
-                        </Border>
-
-                        <!-- Día 10 (Seleccionado / Hoy) -->
-                        <Border Grid.Row="1" Grid.Column="2" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="2" Stroke="#5C93F9" BackgroundColor="#1E2B3C">
-                            <Grid RowDefinitions="*, Auto">
-                                <Label Text="10" Margin="6" FontSize="12" FontAttributes="Bold" TextColor="White"/>
-                                <BoxView Grid.Row="1" HeightRequest="4" CornerRadius="2" Color="#5EEAD4" Margin="4,0,4,4"/>
-                            </Grid>
-                        </Border>
-                        <Border Grid.Row="1" Grid.Column="3" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="11" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="1" Grid.Column="4" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="12" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="1" Grid.Column="5" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="13" Margin="6" FontSize="12"/>
-                        </Border>
-                        <Border Grid.Row="1" Grid.Column="6" HeightRequest="60" StrokeShape="RoundRectangle 8" StrokeThickness="1" Stroke="#E2E8F0" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                            <Label Text="14" Margin="6" FontSize="12"/>
-                        </Border>
-                    </Grid>
+                    <CollectionView x:Name="CalendarCollectionView" SelectionMode="None">
+                        <CollectionView.ItemsLayout>
+                            <GridItemsLayout Orientation="Vertical" Span="7" VerticalItemSpacing="8" HorizontalItemSpacing="6" />
+                        </CollectionView.ItemsLayout>
+                        <CollectionView.ItemTemplate>
+                            <DataTemplate>
+                                <Border HeightRequest="95" StrokeShape="RoundRectangle 10" StrokeThickness="{Binding BorderThickness}" Stroke="{Binding BorderColor}" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                                    <Grid RowDefinitions="*, Auto" Padding="8">
+                                        <Label Grid.Row="0" Text="{Binding DayNumberText}" FontSize="12" FontAttributes="{Binding DayFontAttributes}" TextColor="{Binding DayTextColor}" />
+                                        <BoxView Grid.Row="1" HeightRequest="4" CornerRadius="2" Color="{Binding TaskIndicatorColor}" IsVisible="{Binding HasTask}" Margin="0,0,0,2"/>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </CollectionView.ItemTemplate>
+                    </CollectionView>
                 </VerticalStackLayout>
             </ScrollView>
 
             <!-- MENÚ DESPLEGABLE FLOTANTE DE PERFIL -->
-            <Border HorizontalOptions="End"
-                    VerticalOptions="Start"
-                    Margin="0,10,20,0"
-                    WidthRequest="240"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}"
-                    Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
-                    StrokeThickness="1"
-                    IsVisible="{Binding IsProfileMenuVisible}"
-                    ZIndex="100">
+            <Border HorizontalOptions="End" VerticalOptions="Start" Margin="0,10,20,0" WidthRequest="240" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeThickness="1" IsVisible="{Binding IsProfileMenuVisible}" ZIndex="100">
                 <Border.StrokeShape>
                     <RoundRectangle CornerRadius="12" />
                 </Border.StrokeShape>
-
                 <VerticalStackLayout Padding="14" Spacing="6">
                     <Label Text="{Binding CurrentUser.Username}" FontAttributes="Bold" FontSize="15" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                     <Label Text="{Binding CurrentUser.Email}" FontSize="11" TextColor="#64748B" HorizontalOptions="Center" />
-
                     <BoxView HeightRequest="1" Color="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" Margin="0,4" />
-
-                    <Button Text="📷  Cambiar foto"
-                            Command="{Binding ChangeProfilePictureCommand}"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light=#334155, Dark=#CBD5E1}"
-                            HorizontalOptions="Start" />
-
-                    <Button Text="⚙️  Configuración"
-                            Command="{Binding NavigateSettingsCommand}"
-                            BackgroundColor="Transparent"
-                            TextColor="{AppThemeBinding Light=#334155, Dark=#CBD5E1}"
-                            HorizontalOptions="Start" />
-
-                    <Button Text="🚪  Cerrar sesión"
-                            Command="{Binding LogoutCommand}"
-                            BackgroundColor="Transparent"
-                            TextColor="#EF4444"
-                            HorizontalOptions="Start" />
+                    <Button Text="⚙️  Configuración" Command="{Binding NavigateSettingsCommand}" BackgroundColor="Transparent" TextColor="{AppThemeBinding Light=#334155, Dark=#CBD5E1}" HorizontalOptions="Start" />
+                    <Button Text="🚪  Cerrar sesión" Command="{Binding LogoutCommand}" BackgroundColor="Transparent" TextColor="#EF4444" HorizontalOptions="Start" />
                 </VerticalStackLayout>
             </Border>
 
             <!-- BOTÓN FLOTANTE (FAB) -->
-            <Border HorizontalOptions="End"
-                    VerticalOptions="End"
-                    Margin="0,0,22,24"
-                    WidthRequest="60"
-                    HeightRequest="60"
-                    StrokeShape="RoundRectangle 30"
-                    StrokeThickness="0"
-                    Background="{StaticResource WorkflowBrandBrush}"
-                    Shadow="{StaticResource FabShadow}">
+            <Border HorizontalOptions="End" VerticalOptions="End" Margin="0,0,22,24" WidthRequest="60" HeightRequest="60" StrokeShape="RoundRectangle 30" StrokeThickness="0" Background="{StaticResource WorkflowBrandBrush}" Shadow="{StaticResource FabShadow}">
                 <Grid>
-                    <Label Text="+"
-                           FontSize="34"
-                           FontAttributes="Bold"
-                           TextColor="#0F172A"
-                           HorizontalOptions="Center"
-                           VerticalOptions="Center"
-                           Margin="0,-2,0,0" />
-                    <Button BackgroundColor="Transparent"
-                            Command="{Binding AddCourseCommand}" />
+                    <Label Text="+" FontSize="34" FontAttributes="Bold" TextColor="#0F172A" HorizontalOptions="Center" VerticalOptions="Center" Margin="0,-2,0,0" />
+                    <Button BackgroundColor="Transparent" Command="{Binding AddCourseCommand}" />
                 </Grid>
             </Border>
 
         </Grid>
 
-        <!-- BARRA DE NAVEGACIÓN INFERIOR -->
-        <Border Grid.Row="2"
-                StrokeThickness="1"
-                Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#272E38}"
-                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}"
-                Padding="0,6,0,10">
+        <!-- BARRA DE NAVEGACIÓN INFERIOR (4 PESTAÑAS) -->
+        <Border Grid.Row="2" StrokeThickness="1" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#272E38}" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}" Padding="0,6,0,10">
             <Grid ColumnDefinitions="*, *, *, *">
-
-                <!-- Pestaña 1: Clases -->
-                <VerticalStackLayout Grid.Column="0" Spacing="4" HorizontalOptions="Center">
-                    <Label Text="📚" FontSize="20" HorizontalOptions="Center" />
-                    <Label x:Name="TabClasesLabel"
-                           Text="Clases" 
-                           FontSize="11" 
-                           FontAttributes="Bold" 
-                           TextColor="#5EEAD4" 
-                           HorizontalOptions="Center" />
-                    <BoxView x:Name="TabClasesIndicator"
-                             HeightRequest="3" 
-                             WidthRequest="24" 
-                             Color="#5EEAD4" 
-                             CornerRadius="1.5" />
-
+                <VerticalStackLayout Grid.Column="0" Spacing="2" HorizontalOptions="Center">
+                    <Label Text="📚" FontSize="18" HorizontalOptions="Center" />
+                    <Label x:Name="TabClasesLabel" Text="Clases" FontSize="11" FontAttributes="Bold" TextColor="#5EEAD4" HorizontalOptions="Center" />
+                    <BoxView x:Name="TabClasesIndicator" HeightRequest="3" WidthRequest="24" Color="#5EEAD4" CornerRadius="1.5" />
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnTabClasesTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
-                <!-- Pestaña 2: Tareas -->
-                <VerticalStackLayout Grid.Column="1" Spacing="4" HorizontalOptions="Center">
-                    <Label Text="📋" FontSize="20" HorizontalOptions="Center" />
-                    <Label x:Name="TabTareasLabel"
-                           Text="Tareas" 
-                           FontSize="11" 
-                           TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" 
-                           HorizontalOptions="Center" />
-                    <BoxView x:Name="TabTareasIndicator"
-                             HeightRequest="3" 
-                             WidthRequest="24" 
-                             Color="Transparent" 
-                             CornerRadius="1.5" />
-
+                <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center">
+                    <Label Text="📋" FontSize="18" HorizontalOptions="Center" />
+                    <Label x:Name="TabTareasLabel" Text="Tareas" FontSize="11" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
+                    <BoxView x:Name="TabTareasIndicator" HeightRequest="3" WidthRequest="24" Color="Transparent" CornerRadius="1.5" />
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnTabTareasTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
 
-                <!-- Pestaña 3: Calendario -->
-                <VerticalStackLayout Grid.Column="2" Spacing="4" HorizontalOptions="Center">
-                    <Label Text="📅" FontSize="20" HorizontalOptions="Center" />
-                    <Label x:Name="TabCalendarioLabel"
-                           Text="Calendario" 
-                           FontSize="11" 
-                           TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" 
-                           HorizontalOptions="Center" />
-                    <BoxView x:Name="TabCalendarioIndicator"
-                             HeightRequest="3" 
-                             WidthRequest="24" 
-                             Color="Transparent" 
-                             CornerRadius="1.5" />
+                <VerticalStackLayout Grid.Column="2" Spacing="2" HorizontalOptions="Center">
+                    <Label Text="⏰" FontSize="18" HorizontalOptions="Center" />
+                    <Label x:Name="TabEnfoqueLabel" Text="Enfoque" FontSize="11" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
+                    <BoxView x:Name="TabEnfoqueIndicator" HeightRequest="3" WidthRequest="24" Color="Transparent" CornerRadius="1.5" />
+                    <VerticalStackLayout.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnTabEnfoqueTapped" />
+                    </VerticalStackLayout.GestureRecognizers>
+                </VerticalStackLayout>
 
+                <VerticalStackLayout Grid.Column="3" Spacing="2" HorizontalOptions="Center">
+                    <Label Text="📅" FontSize="18" HorizontalOptions="Center" />
+                    <Label x:Name="TabCalendarioLabel" Text="Calendario" FontSize="11" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" HorizontalOptions="Center" />
+                    <BoxView x:Name="TabCalendarioIndicator" HeightRequest="3" WidthRequest="24" Color="Transparent" CornerRadius="1.5" />
                     <VerticalStackLayout.GestureRecognizers>
                         <TapGestureRecognizer Tapped="OnTabCalendarioTapped" />
                     </VerticalStackLayout.GestureRecognizers>
                 </VerticalStackLayout>
-
-                <!-- Pestaña 4: Ajustes -->
-                <VerticalStackLayout Grid.Column="3" Spacing="4" HorizontalOptions="Center">
-                    <Label Text="⚙️" FontSize="20" HorizontalOptions="Center" />
-                    <Label x:Name="TabAjustesLabel"
-                           Text="Ajustes" 
-                           FontSize="11" 
-                           TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" 
-                           HorizontalOptions="Center" />
-                    <BoxView x:Name="TabAjustesIndicator"
-                             HeightRequest="3" 
-                             WidthRequest="24" 
-                             Color="Transparent" 
-                             CornerRadius="1.5" />
-
-                    <VerticalStackLayout.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnTabAjustesTapped" />
-                    </VerticalStackLayout.GestureRecognizers>
-                </VerticalStackLayout>
-
             </Grid>
         </Border>
 

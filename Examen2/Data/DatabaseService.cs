@@ -17,7 +17,7 @@ namespace Examen2.Data
             var options = new SupabaseOptions
             {
                 AutoRefreshToken = true,
-                AutoConnectRealtime = false
+                AutoConnectRealtime = true
             };
 
             _client = new Supabase.Client(url, key, options);

@@ -69,15 +69,15 @@
 
                     <!-- BANNER / PORTADA DEL CURSO -->
                     <Border HeightRequest="140"
-        StrokeThickness="0"
-        StrokeShape="RoundRectangle 16"
-        Margin="0,0,0,16">
+                        StrokeThickness="0"
+                        StrokeShape="RoundRectangle 16"
+                        Margin="0,0,0,16">
                         <Grid>
                             <!-- Imagen de portada -->
                             <Image Source="{Binding Course.BannerImagePath}"
-               Aspect="AspectFill"
-               HorizontalOptions="Fill"
-               VerticalOptions="Fill" />
+                               Aspect="AspectFill"
+                               HorizontalOptions="Fill"
+                               VerticalOptions="Fill" />
 
                             <!-- Sombra / Gradiente superior -->
                             <Border StrokeThickness="0">
@@ -94,14 +94,14 @@
 
                                         <!-- ENLACE AL NOMBRE DE LA CLASE -->
                                         <Label Text="{Binding Course.CourseName}"
-                                           FontSize="22"
-                                           FontAttributes="Bold"
-                                           TextColor="White" />         
+                                   FontSize="22"
+                                   FontAttributes="Bold"
+                                   TextColor="White" />
 
                                         <!-- ENLACE AL NOMBRE DEL PROFESOR -->
                                         <Label Text="{Binding Course.DisplayTeacherName, StringFormat='Prof. {0}'}"
-                                           FontSize="13"
-                                           TextColor="#5EEAD4" />       
+                                   FontSize="13"
+                                   TextColor="#5EEAD4" />
 
                                         <!-- CÓDIGO DE UNIÓN A LA CLASE -->
                                         <HorizontalStackLayout Spacing="6" Margin="0,4,0,0">

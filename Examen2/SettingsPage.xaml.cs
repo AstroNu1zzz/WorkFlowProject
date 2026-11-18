@@ -23,6 +23,7 @@ public partial class SettingsPage : ContentPage
         base.OnAppearing();
         EnsureServices();
         LoadUserData();
+        LoadCurrentThemeSelection();
     }
 
     private void EnsureServices()
@@ -57,6 +58,38 @@ public partial class SettingsPage : ContentPage
                     LblAvatarInitial.Text = user.Username.Substring(0, 1).ToUpper();
                 }
             }
+        }
+    }
+
+    private void LoadCurrentThemeSelection()
+    {
+        if (Application.Current != null)
+        {
+            if (Application.Current.UserAppTheme == AppTheme.Light)
+                PickerTheme.SelectedIndex = 1; // Claro
+            else if (Application.Current.UserAppTheme == AppTheme.Dark)
+                PickerTheme.SelectedIndex = 2; // Oscuro
+            else
+                PickerTheme.SelectedIndex = 0; // Sistema
+        }
+    }
+
+    private void OnThemeSelectedChanged(object sender, EventArgs e)
+    {
+        if (Application.Current == null) return;
+
+        string selected = PickerTheme.SelectedItem as string;
+        if (selected == "Claro")
+        {
+            Application.Current.UserAppTheme = AppTheme.Light;
+        }
+        else if (selected == "Oscuro")
+        {
+            Application.Current.UserAppTheme = AppTheme.Dark;
+        }
+        else
+        {
+            Application.Current.UserAppTheme = AppTheme.Unspecified; // Sistema
         }
     }
 

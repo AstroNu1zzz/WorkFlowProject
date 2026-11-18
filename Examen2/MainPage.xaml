@@ -120,8 +120,6 @@
                                 <LinearItemsLayout Orientation="Horizontal" ItemSpacing="14" />
                             </CollectionView.ItemsLayout>
 
-                            <!-- Restaurados del código antiguo para centrar las tarjetas -->
-
                             <CollectionView.ItemTemplate>
                                 <DataTemplate>
                                     <Border WidthRequest="240"
@@ -308,10 +306,10 @@
                             </VerticalStackLayout>
 
                             <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
-                                <Button Text="15m" Clicked="OnSet15MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
-                                <Button Text="25m" Clicked="OnSet25MinutesClicked" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
-                                <Button Text="45m" Clicked="OnSet45MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
-                                <Button Text="60m" Clicked="OnSet60MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button x:Name="Btn15Min" Text="15m" Clicked="OnSet15MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button x:Name="Btn25Min" Text="25m" Clicked="OnSet25MinutesClicked" BackgroundColor="#5EEAD4" TextColor="#0F172A" FontAttributes="Bold" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button x:Name="Btn45Min" Text="45m" Clicked="OnSet45MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
+                                <Button x:Name="Btn60Min" Text="60m" Clicked="OnSet60MinutesClicked" BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" FontSize="12" CornerRadius="8" HeightRequest="32" WidthRequest="60" Padding="0"/>
                             </HorizontalStackLayout>
 
                             <Border WidthRequest="180" HeightRequest="180" StrokeShape="RoundRectangle 90" StrokeThickness="3" Stroke="#5EEAD4" BackgroundColor="{AppThemeBinding Light=#F1F5F9, Dark=#12161A}" HorizontalOptions="Center">

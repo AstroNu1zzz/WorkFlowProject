@@ -144,7 +144,7 @@ namespace Examen2.ViewModels
         public ICommand DeleteCourseCommand { get; }
         public ICommand OpenActivityCommand { get; }
 
-        // Nuevos comandos MVVM para Tabs, Temporizador y Calendario
+        // Comandos MVVM para Tabs, Temporizador y Calendario
         public ICommand SelectTabCommand { get; }
         public ICommand SetTimerMinutesCommand { get; }
         public ICommand StartTimerCommand { get; }
@@ -180,7 +180,6 @@ namespace Examen2.ViewModels
             AddCourseCommand = new Command(OnAddCourse);
             DeleteCourseCommand = new Command<Course>(OnDeleteCourse);
 
-            // Inicialización de comandos MVVM migrados
             SelectTabCommand = new Command<string>(OnSelectTab);
             SetTimerMinutesCommand = new Command<string>(OnSetTimerMinutes);
             StartTimerCommand = new Command(OnStartTimer);
@@ -199,6 +198,20 @@ namespace Examen2.ViewModels
             if (user != null)
             {
                 Preferences.Default.Set("LoggedInUserId", user.Id);
+
+                string cloudTheme = string.IsNullOrWhiteSpace(user.AppThemePreference) ? "Sistema" : user.AppThemePreference;
+                Preferences.Default.Set("UserAppTheme", cloudTheme);
+
+                if (Application.Current != null)
+                {
+                    Application.Current.UserAppTheme = cloudTheme switch
+                    {
+                        "Claro" => AppTheme.Light,
+                        "Oscuro" => AppTheme.Dark,
+                        _ => AppTheme.Unspecified
+                    };
+                }
+
                 _ = LoadCoursesAsync();
             }
             UpdateProfileImageState();
@@ -439,13 +452,37 @@ namespace Examen2.ViewModels
         public async Task RefreshCoursesAsync()
         {
             LoadCalendarDays();
-            if (CurrentUser == null) return;
+            await LoadCoursesAsync();
+        }
+
+        private async Task LoadCoursesAsync()
+        {
+            if (CurrentUser == null)
+            {
+                EnrolledCourses.Clear();
+                GlobalRecentActivities.Clear();
+                return;
+            }
 
             var courses = await _databaseService.GetCoursesAsync(CurrentUser.Id);
+            var teacherCourseIds = new HashSet<int>();
+
             EnrolledCourses.Clear();
-            foreach (var c in courses)
+            foreach (var course in courses)
             {
-                EnrolledCourses.Add(c);
+                if (string.IsNullOrWhiteSpace(course.TeacherName) && !string.IsNullOrWhiteSpace(course.PrimaryTeacherName))
+                {
+                    course.TeacherName = course.PrimaryTeacherName;
+                }
+
+                EnrolledCourses.Add(course);
+
+                // Identificar las clases donde el usuario actual es Profesor
+                string role = await _databaseService.GetUserRoleInCourseAsync(course.Id, CurrentUser.Id);
+                if (string.Equals(role, "Teacher", StringComparison.OrdinalIgnoreCase))
+                {
+                    teacherCourseIds.Add(course.Id);
+                }
             }
 
             var activities = await _databaseService.GetGlobalActivitiesAsync(CurrentUser.Id);
@@ -456,10 +493,20 @@ namespace Examen2.ViewModels
 
             foreach (var a in activities)
             {
+                bool isTeacherInThisCourse = teacherCourseIds.Contains(a.CourseId);
+
+                // 1. Si es profesor en esta clase, no mostrar tareas asignadas por él mismo en el tablón global
+                if (isTeacherInThisCourse && a.ItemType == "Tarea")
+                {
+                    continue;
+                }
+
+                // 2. Si es tarea como alumno y ya venció, tampoco mostrarla en el tablón
                 if (a.ItemType == "Tarea" && a.DueDate.HasValue && a.DueDate.Value < DateTime.Now)
                 {
                     continue;
                 }
+
                 string gradient = "#5EEAD4";
 
                 if (a.ItemType == "Tarea")
@@ -584,74 +631,20 @@ namespace Examen2.ViewModels
             }
         }
 
-        private async Task LoadCoursesAsync()
-        {
-            if (CurrentUser == null)
-            {
-                EnrolledCourses.Clear();
-                GlobalRecentActivities.Clear();
-                return;
-            }
-
-            var courses = await _databaseService.GetCoursesAsync(CurrentUser.Id);
-            EnrolledCourses.Clear();
-            foreach (var course in courses)
-            {
-                if (string.IsNullOrWhiteSpace(course.TeacherName) && !string.IsNullOrWhiteSpace(course.PrimaryTeacherName))
-                {
-                    course.TeacherName = course.PrimaryTeacherName;
-                }
-
-                EnrolledCourses.Add(course);
-            }
-
-            var activities = await _databaseService.GetGlobalActivitiesAsync(CurrentUser.Id);
-            GlobalRecentActivities.Clear();
-
-            int colorIndex = 0;
-            string[] vibrantColors = { "#5EEAD4", "#5C93F9", "#86EFAC" };
-
-            foreach (var a in activities)
-            {
-                string gradient = "#5EEAD4";
-
-                if (a.ItemType == "Tarea")
-                {
-                    gradient = vibrantColors[colorIndex % vibrantColors.Length];
-                    colorIndex++;
-                }
-                else if (a.ItemType == "Material")
-                {
-                    gradient = "#5EEAD4";
-                }
-                else
-                {
-                    gradient = "#86EFAC";
-                }
-
-                string icon = a.ItemType == "Tarea" ? "📋" : (a.ItemType == "Material" ? "📖" : "📢");
-
-                var parentCourse = courses.FirstOrDefault(c => c.Id == a.CourseId);
-                string courseName = parentCourse != null ? parentCourse.CourseName : "Clase";
-
-                GlobalRecentActivities.Add(new ActivityItemViewModel
-                {
-                    OriginalItem = a,
-                    DisplayTitle = $"{a.ItemType}: {a.Title}",
-                    Subtitle = $"{courseName} • Publicado el {a.CreatedAt:dd MMM}",
-                    GradientStartColor = gradient,
-                    IconString = icon,
-                    HasDueDate = a.DueDate.HasValue,
-                    DueDateString = a.DueDate.HasValue ? $"Entrega: {a.DueDate.Value:dd/MM/yyyy HH:mm}" : ""
-                });
-            }
-        }
-
         private async Task OpenActivityAsync(ActivityItemViewModel activity)
         {
-            if (activity?.OriginalItem == null) return;
+            if (activity?.OriginalItem == null || Application.Current?.MainPage == null) return;
 
-            if (Application.Current?.MainPage != null)
+            string role = await _databaseService.GetUserRoleInCourseAsync(activity.OriginalItem.CourseId, CurrentUser.Id);
+            bool isTeacher = string.Equals(role, "Teacher", StringComparison.OrdinalIgnoreCase);
+
+            if (isTeacher && activity.OriginalItem.ItemType == "Tarea")
+            {
+                await Application.Current.MainPage.Navigation.PushAsync(
+                    new TeacherTaskOverviewPage(activity.OriginalItem, activity.OriginalItem.CourseId, _databaseService, this)
+                );
+            }
+            else
             {
                 await Application.Current.MainPage.Navigation.PushAsync(
                     new ContentDetailPage(activity.OriginalItem, _databaseService, this)

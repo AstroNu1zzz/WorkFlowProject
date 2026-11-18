@@ -18,6 +18,14 @@ public partial class App : Application
     {
         InitializeComponent();
 
+        string localTheme = Preferences.Default.Get("UserAppTheme", "Sistema");
+        UserAppTheme = localTheme switch
+        {
+            "Claro" => AppTheme.Light,
+            "Oscuro" => AppTheme.Dark,
+            _ => AppTheme.Unspecified
+        };
+
         _databaseService = databaseService;
         _emailService = emailService;
         _mainViewModel = mainViewModel;

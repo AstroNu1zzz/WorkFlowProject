@@ -60,7 +60,7 @@ public partial class CourseGradesPage : ContentPage
     private readonly Course _course;
     private readonly DatabaseService _databaseService;
     private readonly MainViewModel _mainViewModel;
-    private readonly bool _isTeacher;
+    private bool _isTeacher;
 
     public CourseGradesPage(Course course, DatabaseService databaseService, MainViewModel mainViewModel, bool isTeacher = false)
     {
@@ -89,13 +89,24 @@ public partial class CourseGradesPage : ContentPage
     {
         if (_mainViewModel?.CurrentUser == null) return;
 
+        string role = await _databaseService.GetUserRoleInCourseAsync(_course.Id, _mainViewModel.CurrentUser.Id);
+        _isTeacher = string.Equals(role, "Teacher", StringComparison.OrdinalIgnoreCase);
+
         var units = await _databaseService.GetCourseUnitsAsync(_course.Id);
         var allItems = await _databaseService.GetCourseContentItemsAsync(_course.Id);
 
-        // Si es profesor trae todos los alumnos; si es alumno solo se evalúa a sí mismo
-        var targetStudents = _isTeacher
-            ? await _databaseService.GetCourseStudentsAsync(_course.Id)
-            : new List<User> { _mainViewModel.CurrentUser };
+        List<User> targetStudents;
+        if (_isTeacher)
+        {
+            // Profesor: ve a todos los alumnos inscritos (excluyéndose a sí mismo si apareciera)
+            var allStudents = await _databaseService.GetCourseStudentsAsync(_course.Id);
+            targetStudents = allStudents.Where(s => s.Id != _mainViewModel.CurrentUser.Id).ToList();
+        }
+        else
+        {
+            // Alumno: única y exclusivamente su propio registro
+            targetStudents = new List<User> { _mainViewModel.CurrentUser };
+        }
 
         var displayList = new List<UnitGradeDisplayModel>();
 

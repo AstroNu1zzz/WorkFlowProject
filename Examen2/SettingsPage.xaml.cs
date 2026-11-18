@@ -9,6 +9,7 @@ public partial class SettingsPage : ContentPage
     private DatabaseService _databaseService;
     private EmailService _emailService;
     private MainViewModel _mainViewModel;
+    private bool _isLoadingTheme;
 
     public SettingsPage(DatabaseService databaseService = null, EmailService emailService = null, MainViewModel mainViewModel = null)
     {
@@ -63,33 +64,44 @@ public partial class SettingsPage : ContentPage
 
     private void LoadCurrentThemeSelection()
     {
-        if (Application.Current != null)
-        {
-            if (Application.Current.UserAppTheme == AppTheme.Light)
-                PickerTheme.SelectedIndex = 1; // Claro
-            else if (Application.Current.UserAppTheme == AppTheme.Dark)
-                PickerTheme.SelectedIndex = 2; // Oscuro
-            else
-                PickerTheme.SelectedIndex = 0; // Sistema
-        }
+        _isLoadingTheme = true;
+
+        string savedTheme = _mainViewModel?.CurrentUser?.AppThemePreference
+                            ?? Preferences.Default.Get("UserAppTheme", "Sistema");
+
+        if (savedTheme == "Claro")
+            PickerTheme.SelectedIndex = 1;
+        else if (savedTheme == "Oscuro")
+            PickerTheme.SelectedIndex = 2;
+        else
+            PickerTheme.SelectedIndex = 0;
+
+        _isLoadingTheme = false;
     }
 
-    private void OnThemeSelectedChanged(object sender, EventArgs e)
+    private async void OnThemeSelectedChanged(object sender, EventArgs e)
     {
-        if (Application.Current == null) return;
+        if (_isLoadingTheme || Application.Current == null) return;
 
-        string selected = PickerTheme.SelectedItem as string;
-        if (selected == "Claro")
+        string selected = PickerTheme.SelectedItem as string ?? "Sistema";
+
+        // 1. Aplicar inmediatamente en la app
+        Application.Current.UserAppTheme = selected switch
         {
-            Application.Current.UserAppTheme = AppTheme.Light;
-        }
-        else if (selected == "Oscuro")
+            "Claro" => AppTheme.Light,
+            "Oscuro" => AppTheme.Dark,
+            _ => AppTheme.Unspecified
+        };
+
+        // 2. Guardar respaldo local inmediato (para el arranque antes de leer Supabase)
+        Preferences.Default.Set("UserAppTheme", selected);
+
+        // 3. Guardar en Supabase en el perfil del usuario actual
+        var user = _mainViewModel?.CurrentUser;
+        if (user != null && _databaseService != null)
         {
-            Application.Current.UserAppTheme = AppTheme.Dark;
-        }
-        else
-        {
-            Application.Current.UserAppTheme = AppTheme.Unspecified; // Sistema
+            user.AppThemePreference = selected;
+            await _databaseService.UpdateUserAsync(user);
         }
     }
 

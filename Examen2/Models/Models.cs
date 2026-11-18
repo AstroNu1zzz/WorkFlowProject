@@ -25,6 +25,9 @@ namespace Examen2.Data
         [Column("is_email_verified")]
         public bool IsEmailVerified { get; set; }
 
+        [Column("app_theme")]
+        public string AppThemePreference { get; set; } = "Sistema";
+
         [Column("profile_picture_path")]
         public string ProfilePicturePath { get; set; }
     }

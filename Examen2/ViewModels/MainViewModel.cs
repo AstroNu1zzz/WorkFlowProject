@@ -232,14 +232,14 @@ namespace Examen2.ViewModels
         }
 
         // --- CALENDARIO DINÁMICO ---
-        private int _currentMonthIndex = 11;
-        private int _currentYear = 2026;
+        private int _currentMonthIndex = DateTime.Now.Month;
+        private int _currentYear = DateTime.Now.Year;
         private readonly string[] _monthNames = {
             "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio",
             "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"
         };
 
-        private string _currentMonthYearText = "Noviembre de 2026";
+        private string _currentMonthYearText = "";
         public string CurrentMonthYearText
         {
             get => _currentMonthYearText;
@@ -251,6 +251,7 @@ namespace Examen2.ViewModels
         // --- PROPIEDADES DE LA INTERFAZ ---
         public ObservableCollection<Course> EnrolledCourses { get; set; }
         public string NextDeadlineMessage { get; set; }
+        private List<ActivityItemViewModel> _allUserTasksForCalendar = new();
 
         // --- COMANDOS ---
         public ICommand NavigateHomeCommand { get; }
@@ -268,6 +269,7 @@ namespace Examen2.ViewModels
         public ICommand AddCourseCommand { get; }
         public ICommand DeleteCourseCommand { get; }
         public ICommand OpenActivityCommand { get; }
+        public ICommand OpenCalendarDayCommand { get; }
 
         // Comandos MVVM para Tabs, Temporizador y Calendario
         public ICommand SelectTabCommand { get; }
@@ -293,6 +295,7 @@ namespace Examen2.ViewModels
             NavigateArchivedCommand = new Command(OnNavigateArchived);
             NavigateSettingsCommand = new Command(OnNavigateSettings);
             OpenActivityCommand = new Command<ActivityItemViewModel>(async (activity) => await OpenActivityAsync(activity));
+            OpenCalendarDayCommand = new Command<CalendarDayModel>(async (day) => await OpenCalendarDayAsync(day));
 
             OpenCourseCommand = new Command<Course>(OnOpenCourse);
             OpenCourseFilesCommand = new Command<Course>(OnOpenCourseFiles);
@@ -861,22 +864,41 @@ namespace Examen2.ViewModels
 
             for (int day = 1; day <= daysInMonth; day++)
             {
-                bool hasTask = false;
+                var currentDate = new DateTime(_currentYear, _currentMonthIndex, day);
+                var tasksForThisDay = _allUserTasksForCalendar
+                    .Where(t => t.OriginalItem.DueDate.HasValue && t.OriginalItem.DueDate.Value.Date == currentDate.Date)
+                    .ToList();
+
+                bool hasTask = tasksForThisDay.Count > 0;
                 string taskColor = "Transparent";
 
-                if (_currentYear == 2026 && _currentMonthIndex == 11)
+                if (hasTask)
                 {
-                    if (day == 7) { hasTask = true; taskColor = "#5EEAD4"; }
-                    if (day == 8) { hasTask = true; taskColor = "#5C93F9"; }
-                    if (day == 10) { hasTask = true; taskColor = "#86EFAC"; }
+                    bool isOverdue = currentDate.Date < DateTime.Now.Date;
+                    taskColor = isOverdue ? "#F87171" : "#5EEAD4";
                 }
 
                 CalendarDays.Add(new CalendarDayModel
                 {
+                    Date = currentDate,
                     DayNumber = day,
                     HasTask = hasTask,
-                    TaskIndicatorColor = taskColor
+                    TaskIndicatorColor = taskColor,
+                    DayTasks = tasksForThisDay
                 });
+            }
+        }
+
+        private async Task OpenCalendarDayAsync(CalendarDayModel dayModel)
+        {
+            if (dayModel == null || !dayModel.HasTask || dayModel.DayTasks == null || dayModel.DayTasks.Count == 0)
+                return;
+
+            if (Application.Current?.MainPage != null)
+            {
+                await Application.Current.MainPage.Navigation.PushAsync(
+                    new DayTasksPage(dayModel.Date, dayModel.DayTasks, _databaseService, this)
+                );
             }
         }
 
@@ -957,7 +979,6 @@ namespace Examen2.ViewModels
 
         public async Task RefreshCoursesAsync()
         {
-            LoadCalendarDays();
             await LoadCoursesAsync();
         }
 
@@ -967,6 +988,8 @@ namespace Examen2.ViewModels
             {
                 EnrolledCourses.Clear();
                 GlobalRecentActivities.Clear();
+                _allUserTasksForCalendar.Clear();
+                LoadCalendarDays();
                 return;
             }
 
@@ -992,6 +1015,7 @@ namespace Examen2.ViewModels
 
             var activities = await _databaseService.GetGlobalActivitiesAsync(CurrentUser.Id);
             GlobalRecentActivities.Clear();
+            _allUserTasksForCalendar.Clear();
 
             int colorIndex = 0;
             string[] vibrantColors = { "#5EEAD4", "#5C93F9", "#86EFAC" };
@@ -999,6 +1023,23 @@ namespace Examen2.ViewModels
             foreach (var a in activities)
             {
                 bool isTeacherInThisCourse = teacherCourseIds.Contains(a.CourseId);
+                var parentCourse = courses.FirstOrDefault(c => c.Id == a.CourseId);
+                string courseName = parentCourse != null ? parentCourse.CourseName : "Clase";
+
+                // Guardar todas las tareas con fecha límite para el calendario
+                if (a.ItemType == "Tarea" && a.DueDate.HasValue)
+                {
+                    _allUserTasksForCalendar.Add(new ActivityItemViewModel
+                    {
+                        OriginalItem = a,
+                        DisplayTitle = a.Title,
+                        Subtitle = $"{courseName} • {(isTeacherInThisCourse ? "Clase impartida" : "Clase inscrita")}",
+                        GradientStartColor = a.DueDate.Value < DateTime.Now ? "#F87171" : "#5EEAD4",
+                        IconString = "📋",
+                        HasDueDate = true,
+                        DueDateString = $"Hora límite: {a.DueDate.Value:HH:mm}"
+                    });
+                }
 
                 if (isTeacherInThisCourse && a.ItemType == "Tarea")
                 {
@@ -1033,9 +1074,6 @@ namespace Examen2.ViewModels
                     _ => "📢"
                 };
 
-                var parentCourse = courses.FirstOrDefault(c => c.Id == a.CourseId);
-                string courseName = parentCourse != null ? parentCourse.CourseName : "Clase";
-
                 GlobalRecentActivities.Add(new ActivityItemViewModel
                 {
                     OriginalItem = a,
@@ -1047,6 +1085,8 @@ namespace Examen2.ViewModels
                     DueDateString = a.DueDate.HasValue ? $"Entrega: {a.DueDate.Value:dd/MM/yyyy HH:mm}" : ""
                 });
             }
+
+            LoadCalendarDays();
         }
 
         private async void OnAddCourse()
@@ -1241,10 +1281,12 @@ namespace Examen2.ViewModels
 
     public class CalendarDayModel
     {
+        public DateTime Date { get; set; }
         public int DayNumber { get; set; }
         public string DayNumberText => DayNumber > 0 ? DayNumber.ToString() : string.Empty;
         public bool HasTask { get; set; }
         public string TaskIndicatorColor { get; set; } = "Transparent";
+        public List<ActivityItemViewModel> DayTasks { get; set; } = new();
         public double BorderThickness => HasTask ? 1.5 : 1.0;
         public string BorderColor => HasTask ? TaskIndicatorColor : "#2D3748";
         public FontAttributes DayFontAttributes => HasTask ? FontAttributes.Bold : FontAttributes.None;

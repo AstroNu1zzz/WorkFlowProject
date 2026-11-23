@@ -360,17 +360,36 @@
                         <Label Grid.Column="5" Text="V" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
                         <Label Grid.Column="6" Text="S" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
                     </Grid>
-
                     <CollectionView ItemsSource="{Binding CalendarDays}" SelectionMode="None">
                         <CollectionView.ItemsLayout>
                             <GridItemsLayout Orientation="Vertical" Span="7" VerticalItemSpacing="8" HorizontalItemSpacing="6" />
                         </CollectionView.ItemsLayout>
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
-                                <Border HeightRequest="95" StrokeShape="RoundRectangle 10" StrokeThickness="{Binding BorderThickness}" Stroke="{Binding BorderColor}" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                                <Border HeightRequest="95"
+                    StrokeShape="RoundRectangle 10"
+                    StrokeThickness="{Binding BorderThickness}"
+                    Stroke="{Binding BorderColor}"
+                    IsEnabled="{Binding HasTask}"
+                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer
+                        Command="{Binding Source={x:Reference mainPage}, Path=BindingContext.OpenCalendarDayCommand}"
+                        CommandParameter="{Binding .}" />
+                                    </Border.GestureRecognizers>
+
                                     <Grid RowDefinitions="*, Auto" Padding="8">
-                                        <Label Grid.Row="0" Text="{Binding DayNumberText}" FontSize="12" FontAttributes="{Binding DayFontAttributes}" TextColor="{Binding DayTextColor}" />
-                                        <BoxView Grid.Row="1" HeightRequest="4" CornerRadius="2" Color="{Binding TaskIndicatorColor}" IsVisible="{Binding HasTask}" Margin="0,0,0,2"/>
+                                        <Label Grid.Row="0"
+                           Text="{Binding DayNumberText}"
+                           FontSize="12"
+                           FontAttributes="{Binding DayFontAttributes}"
+                           TextColor="{Binding DayTextColor}" />
+                                        <BoxView Grid.Row="1"
+                             HeightRequest="4"
+                             CornerRadius="2"
+                             Color="{Binding TaskIndicatorColor}"
+                             IsVisible="{Binding HasTask}"
+                             Margin="0,0,0,2" />
                                     </Grid>
                                 </Border>
                             </DataTemplate>

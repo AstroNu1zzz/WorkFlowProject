@@ -37,6 +37,14 @@ public partial class App : Application
         CheckSessionAsync();
     }
 
+    protected override void OnResume()
+    {
+        base.OnResume();
+
+        // Usa Examen2.MainPage para evitar conflicto con la propiedad Application.MainPage
+        Examen2.MainPage.Instance?.SyncTimerFromStorage();
+    }
+
     private async void CheckSessionAsync()
     {
         try
@@ -45,7 +53,7 @@ public partial class App : Application
             int userId = Preferences.Default.Get("CurrentUserId", -1);
             DateTime last2FA = Preferences.Default.Get("Last2FAVerifiedAt", DateTime.MinValue);
 
-            // CORRECCIÓN: Solo se considera expirado si se registró una fecha previa y pasaron más de 30 días
+            // Solo se considera expirado si se registró una fecha previa y pasaron más de 30 días
             bool is2FAExpired = last2FA != DateTime.MinValue && (DateTime.UtcNow - last2FA).TotalDays > 30;
 
             if (isLoggedIn && userId != -1 && !is2FAExpired)
@@ -59,7 +67,7 @@ public partial class App : Application
                     // Redirección a la pantalla principal en el hilo de interfaz de usuario
                     MainThread.BeginInvokeOnMainThread(() =>
                     {
-                        MainPage = new NavigationPage(new MainPage(_databaseService, _mainViewModel));
+                        MainPage = new NavigationPage(new MainPage(_databaseService, _emailService, _mainViewModel));
                     });
                 }
             }

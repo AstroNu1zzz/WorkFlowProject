@@ -9,12 +9,84 @@ using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using System.Windows.Input;
 
+#if ANDROID
+using Android.Content;
+using Android.OS;
+using Android.Provider;
+using AndroidX.Core.App;
+#endif
+
 namespace Examen2.ViewModels
 {
+#if ANDROID
+    [Android.Content.BroadcastReceiver(Enabled = true, Exported = true)]
+    public class FocusExtensionReceiver : Android.Content.BroadcastReceiver
+    {
+        public const string ActionAddFiveMinutes = "com.examen2.workflow.ADD_FIVE_MINUTES";
+        public const string ActionDismissPrompt = "com.examen2.workflow.DISMISS_PROMPT";
+        public const string ActionThreeMinWarning = "com.examen2.workflow.THREE_MIN_WARNING";
+        public const string ActionTimerFinished = "com.examen2.workflow.TIMER_FINISHED";
+
+        public override void OnReceive(Context context, Intent intent)
+        {
+            string action = intent?.Action;
+
+            if (action == ActionAddFiveMinutes)
+            {
+                long currentEndTicks = Preferences.Default.Get("FocusEndTimeUtcTicks", 0L);
+                if (currentEndTicks > 0)
+                {
+                    DateTime newEndTime = new DateTime(currentEndTicks, DateTimeKind.Utc).AddMinutes(5);
+                    Preferences.Default.Set("FocusEndTimeUtcTicks", newEndTime.Ticks);
+                    Preferences.Default.Set("FocusThreeMinPromptShown", false);
+
+                    int newRemaining = (int)Math.Max(0, Math.Ceiling((newEndTime - DateTime.UtcNow).TotalSeconds));
+                    MainViewModel.ScheduleSystemAlarmsStatic(context, newEndTime);
+                    MainViewModel.ShowCountdownNotificationStatic(context, newRemaining);
+                }
+                MainViewModel.DismissExtensionNotificationStatic(context);
+                MainViewModel.Instance?.SyncTimerFromStorage();
+            }
+            else if (action == ActionDismissPrompt)
+            {
+                MainViewModel.DismissExtensionNotificationStatic(context);
+            }
+            else if (action == ActionThreeMinWarning)
+            {
+                bool alreadyShown = Preferences.Default.Get("FocusThreeMinPromptShown", false);
+                bool isRunning = Preferences.Default.Get("FocusIsRunning", false);
+
+                if (isRunning && !alreadyShown)
+                {
+                    Preferences.Default.Set("FocusThreeMinPromptShown", true);
+                    MainViewModel.ShowThreeMinuteExtensionNotificationStatic(context);
+                }
+            }
+            else if (action == ActionTimerFinished)
+            {
+                Preferences.Default.Set("FocusIsRunning", false);
+                Preferences.Default.Set("FocusEndTimeUtcTicks", 0L);
+                Preferences.Default.Set("FocusThreeMinPromptShown", false);
+                MainViewModel.SetDoNotDisturbStatic(context, false);
+                MainViewModel.ShowFinishedNotificationStatic(context);
+                MainViewModel.Instance?.SyncTimerFromStorage();
+            }
+        }
+    }
+#endif
+
     public class MainViewModel : INotifyPropertyChanged
     {
+        public static MainViewModel Instance { get; private set; }
+
         private readonly DatabaseService _databaseService;
         private readonly EmailService _emailService;
+
+        // Constantes de notificaciones Android
+        public const string FocusChannelId = "workflow_focus_timer_channel_v2";
+        public const string PromptChannelId = "workflow_focus_prompt_channel_v2";
+        public const int FocusNotificationId = 1001;
+        public const int ExtensionPromptNotificationId = 1002;
 
         // --- GESTIÓN DEL PERFIL DE USUARIO ---
         private User _currentUser;
@@ -89,8 +161,10 @@ namespace Examen2.ViewModels
 
         // --- TEMPORIZADOR POMODORO (MODO ENFOQUE) ---
         private IDispatcherTimer _timer;
+        private int _selectedDurationMinutes = 25;
         private int _remainingSeconds = 1500;
         private bool _isTimerRunning;
+        private DateTime _endTimeUtc;
 
         private string _timerText = "25:00";
         public string TimerText
@@ -104,6 +178,57 @@ namespace Examen2.ViewModels
         {
             get => _timerStatusText;
             set { _timerStatusText = value; OnPropertyChanged(); }
+        }
+
+        // Propiedades visuales para los 4 botones de tiempo
+        public Color Btn15BgColor => GetDurationBtnBg(15);
+        public Color Btn15TextColor => GetDurationBtnText(15);
+        public FontAttributes Btn15FontAttributes => _selectedDurationMinutes == 15 ? FontAttributes.Bold : FontAttributes.None;
+
+        public Color Btn25BgColor => GetDurationBtnBg(25);
+        public Color Btn25TextColor => GetDurationBtnText(25);
+        public FontAttributes Btn25FontAttributes => _selectedDurationMinutes == 25 ? FontAttributes.Bold : FontAttributes.None;
+
+        public Color Btn45BgColor => GetDurationBtnBg(45);
+        public Color Btn45TextColor => GetDurationBtnText(45);
+        public FontAttributes Btn45FontAttributes => _selectedDurationMinutes == 45 ? FontAttributes.Bold : FontAttributes.None;
+
+        public Color Btn60BgColor => GetDurationBtnBg(60);
+        public Color Btn60TextColor => GetDurationBtnText(60);
+        public FontAttributes Btn60FontAttributes => _selectedDurationMinutes == 60 ? FontAttributes.Bold : FontAttributes.None;
+
+        private Color GetDurationBtnBg(int minutes)
+        {
+            if (_selectedDurationMinutes == minutes)
+                return Color.FromArgb("#5EEAD4");
+
+            bool isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+            return isDark ? Color.FromArgb("#2D3748") : Color.FromArgb("#E2E8F0");
+        }
+
+        private Color GetDurationBtnText(int minutes)
+        {
+            if (_selectedDurationMinutes == minutes)
+                return Color.FromArgb("#0F172A");
+
+            bool isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
+            return isDark ? Color.FromArgb("#F8FAFC") : Color.FromArgb("#0F172A");
+        }
+
+        private void NotifyDurationButtonsChanged()
+        {
+            OnPropertyChanged(nameof(Btn15BgColor));
+            OnPropertyChanged(nameof(Btn15TextColor));
+            OnPropertyChanged(nameof(Btn15FontAttributes));
+            OnPropertyChanged(nameof(Btn25BgColor));
+            OnPropertyChanged(nameof(Btn25TextColor));
+            OnPropertyChanged(nameof(Btn25FontAttributes));
+            OnPropertyChanged(nameof(Btn45BgColor));
+            OnPropertyChanged(nameof(Btn45TextColor));
+            OnPropertyChanged(nameof(Btn45FontAttributes));
+            OnPropertyChanged(nameof(Btn60BgColor));
+            OnPropertyChanged(nameof(Btn60TextColor));
+            OnPropertyChanged(nameof(Btn60FontAttributes));
         }
 
         // --- CALENDARIO DINÁMICO ---
@@ -155,6 +280,7 @@ namespace Examen2.ViewModels
 
         public MainViewModel(DatabaseService databaseService, EmailService emailService)
         {
+            Instance = this;
             _databaseService = databaseService;
             _emailService = emailService;
             EnrolledCourses = new ObservableCollection<Course>();
@@ -182,12 +308,13 @@ namespace Examen2.ViewModels
 
             SelectTabCommand = new Command<string>(OnSelectTab);
             SetTimerMinutesCommand = new Command<string>(OnSetTimerMinutes);
-            StartTimerCommand = new Command(OnStartTimer);
+            StartTimerCommand = new Command(async () => await OnStartTimerAsync());
             PauseTimerCommand = new Command(OnPauseTimer);
             ResetTimerCommand = new Command(OnResetTimer);
             PreviousMonthCommand = new Command(OnPreviousMonth);
             NextMonthCommand = new Command(OnNextMonth);
 
+            CreateNotificationChannels();
             LoadCalendarDays();
             _ = LoadCoursesAsync();
         }
@@ -212,6 +339,7 @@ namespace Examen2.ViewModels
                     };
                 }
 
+                NotifyDurationButtonsChanged();
                 _ = LoadCoursesAsync();
             }
             UpdateProfileImageState();
@@ -246,47 +374,164 @@ namespace Examen2.ViewModels
             if (IsCalendarioVisible) LoadCalendarDays();
         }
 
-        // --- LÓGICA DEL TEMPORIZADOR POMODORO ---
-        private void OnSetTimerMinutes(string minutesParam)
-        {
-            if (int.TryParse(minutesParam, out int minutes))
-            {
-                _remainingSeconds = minutes * 60;
-                _timer?.Stop();
-                _isTimerRunning = false;
-                TimerStatusText = "Listo para iniciar";
-                UpdateTimerDisplay();
-            }
-        }
-
-        private void OnStartTimer()
+        // ==========================================
+        // LÓGICA DEL TEMPORIZADOR Y SEGUNDO PLANO
+        // ==========================================
+        private void SetupTimerIfNeeded()
         {
             if (_timer == null && Application.Current != null)
             {
                 _timer = Application.Current.Dispatcher.CreateTimer();
-                _timer.Interval = TimeSpan.FromSeconds(1);
+                _timer.Interval = TimeSpan.FromMilliseconds(500);
                 _timer.Tick += (s, e) =>
                 {
-                    if (_remainingSeconds > 0)
+                    if (!_isTimerRunning) return;
+
+                    int secondsLeft = (int)Math.Ceiling((_endTimeUtc - DateTime.UtcNow).TotalSeconds);
+
+                    if (secondsLeft > 0)
                     {
-                        _remainingSeconds--;
-                        UpdateTimerDisplay();
+                        if (secondsLeft != _remainingSeconds)
+                        {
+                            _remainingSeconds = secondsLeft;
+                            UpdateTimerDisplay();
+                        }
+
+                        if (secondsLeft <= 180 && !Preferences.Default.Get("FocusThreeMinPromptShown", false))
+                        {
+                            Preferences.Default.Set("FocusThreeMinPromptShown", true);
+#if ANDROID
+                            ShowThreeMinuteExtensionNotificationStatic(Android.App.Application.Context);
+#endif
+                        }
                     }
                     else
                     {
-                        _timer.Stop();
-                        _isTimerRunning = false;
-                        TimerStatusText = "¡Tiempo cumplido! 🎉";
-                        Application.Current?.MainPage?.DisplayAlert("Modo Enfoque", "¡Excelente trabajo! Has completado tu sesión de concentración.", "OK");
+                        CompleteFocusSession(showInAppAlert: true);
                     }
                 };
             }
+        }
 
-            if (!_isTimerRunning)
+        public void SyncTimerFromStorage()
+        {
+            MainThread.BeginInvokeOnMainThread(() =>
             {
+                bool wasRunning = Preferences.Default.Get("FocusIsRunning", false);
+                long savedEndTicks = Preferences.Default.Get("FocusEndTimeUtcTicks", 0L);
+
+                if (wasRunning && savedEndTicks > 0)
+                {
+                    _endTimeUtc = new DateTime(savedEndTicks, DateTimeKind.Utc);
+                    int secondsLeft = (int)Math.Ceiling((_endTimeUtc - DateTime.UtcNow).TotalSeconds);
+
+                    if (secondsLeft > 0)
+                    {
+                        _remainingSeconds = secondsLeft;
+                        _isTimerRunning = true;
+                        TimerStatusText = "En curso • No molestar 🔕";
+                        UpdateTimerDisplay();
+                        SetupTimerIfNeeded();
+                        if (_timer != null && !_timer.IsRunning) _timer.Start();
+
+#if ANDROID
+                        ShowCountdownNotificationStatic(Android.App.Application.Context, _remainingSeconds);
+#endif
+                    }
+                    else
+                    {
+                        CompleteFocusSession(showInAppAlert: false);
+                    }
+                }
+                else if (!wasRunning && _isTimerRunning)
+                {
+                    CompleteFocusSession(showInAppAlert: false);
+                }
+            });
+        }
+
+        private void CompleteFocusSession(bool showInAppAlert)
+        {
+            _timer?.Stop();
+            _isTimerRunning = false;
+            _remainingSeconds = 0;
+
+            Preferences.Default.Set("FocusIsRunning", false);
+            Preferences.Default.Set("FocusEndTimeUtcTicks", 0L);
+            Preferences.Default.Set("FocusThreeMinPromptShown", false);
+
+#if ANDROID
+            var ctx = Android.App.Application.Context;
+            SetDoNotDisturbStatic(ctx, false);
+            CancelSystemAlarmsStatic(ctx);
+#endif
+
+            TimerStatusText = "¡Tiempo cumplido! 🎉";
+            UpdateTimerDisplay();
+
+            if (showInAppAlert)
+            {
+#if ANDROID
+                ShowFinishedNotificationStatic(Android.App.Application.Context);
+#endif
+                Application.Current?.MainPage?.DisplayAlert("Modo Enfoque", "¡Excelente trabajo! Has completado tu sesión de concentración.", "OK");
+            }
+        }
+
+        private void OnSetTimerMinutes(string minutesParam)
+        {
+            if (int.TryParse(minutesParam, out int minutes))
+            {
+                _selectedDurationMinutes = minutes;
+                _remainingSeconds = minutes * 60;
+                _timer?.Stop();
+                _isTimerRunning = false;
+
+                Preferences.Default.Set("FocusIsRunning", false);
+                Preferences.Default.Set("FocusEndTimeUtcTicks", 0L);
+                Preferences.Default.Set("FocusThreeMinPromptShown", false);
+
+#if ANDROID
+                var ctx = Android.App.Application.Context;
+                SetDoNotDisturbStatic(ctx, false);
+                CancelSystemAlarmsStatic(ctx);
+                CancelAllFocusNotificationsStatic(ctx);
+#endif
+
+                TimerStatusText = "Listo para iniciar";
+                UpdateTimerDisplay();
+                NotifyDurationButtonsChanged();
+            }
+        }
+
+        private async Task OnStartTimerAsync()
+        {
+            SetupTimerIfNeeded();
+            if (!_isTimerRunning && _remainingSeconds > 0)
+            {
+                bool hasNotifPermission = await RequestNotificationPermissionAsync();
+                await EnsureSystemPermissionsAsync();
+
+                _endTimeUtc = DateTime.UtcNow.AddSeconds(_remainingSeconds);
                 _isTimerRunning = true;
-                TimerStatusText = "En curso 🚀";
+
+                Preferences.Default.Set("FocusIsRunning", true);
+                Preferences.Default.Set("FocusEndTimeUtcTicks", _endTimeUtc.Ticks);
+                Preferences.Default.Set("FocusThreeMinPromptShown", _remainingSeconds <= 180);
+
+                TimerStatusText = "En curso • No molestar 🔕";
                 _timer?.Start();
+
+#if ANDROID
+                var ctx = Android.App.Application.Context;
+                SetDoNotDisturbStatic(ctx, true);
+                ScheduleSystemAlarmsStatic(ctx, _endTimeUtc);
+
+                if (hasNotifPermission)
+                {
+                    ShowCountdownNotificationStatic(ctx, _remainingSeconds);
+                }
+#endif
             }
         }
 
@@ -296,17 +541,27 @@ namespace Examen2.ViewModels
             {
                 _timer.Stop();
                 _isTimerRunning = false;
+
+                _remainingSeconds = Math.Max(0, (int)Math.Ceiling((_endTimeUtc - DateTime.UtcNow).TotalSeconds));
+
+                Preferences.Default.Set("FocusIsRunning", false);
+                Preferences.Default.Set("FocusEndTimeUtcTicks", 0L);
+
                 TimerStatusText = "Pausado ⏸️";
+                UpdateTimerDisplay();
+
+#if ANDROID
+                var ctx = Android.App.Application.Context;
+                SetDoNotDisturbStatic(ctx, false);
+                CancelSystemAlarmsStatic(ctx);
+                CancelAllFocusNotificationsStatic(ctx);
+#endif
             }
         }
 
         private void OnResetTimer()
         {
-            _timer?.Stop();
-            _isTimerRunning = false;
-            _remainingSeconds = 1500;
-            TimerStatusText = "Listo para iniciar";
-            UpdateTimerDisplay();
+            OnSetTimerMinutes(_selectedDurationMinutes.ToString());
         }
 
         private void UpdateTimerDisplay()
@@ -315,6 +570,257 @@ namespace Examen2.ViewModels
             int seconds = _remainingSeconds % 60;
             TimerText = $"{minutes:D2}:{seconds:D2}";
         }
+
+        // ==========================================
+        // MÉTODOS NATIVOS DE ANDROID (NOTIFICACIONES Y DND)
+        // ==========================================
+        private void CreateNotificationChannels()
+        {
+#if ANDROID
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.O)
+            {
+                var notificationManager = (Android.App.NotificationManager)Android.App.Application.Context.GetSystemService(Context.NotificationService);
+
+                var timerChannel = new Android.App.NotificationChannel(FocusChannelId, "Temporizador Modo Enfoque", Android.App.NotificationImportance.Low)
+                {
+                    Description = "Muestra el contador regresivo en tiempo real."
+                };
+                timerChannel.SetBypassDnd(true);
+
+                var promptChannel = new Android.App.NotificationChannel(PromptChannelId, "Avisos de Extensión de Tiempo", Android.App.NotificationImportance.High)
+                {
+                    Description = "Pregunta si deseas añadir 5 minutos cuando quedan 3 minutos."
+                };
+                promptChannel.SetBypassDnd(true);
+                promptChannel.EnableVibration(true);
+
+                notificationManager?.CreateNotificationChannel(timerChannel);
+                notificationManager?.CreateNotificationChannel(promptChannel);
+            }
+#endif
+        }
+
+        private async Task EnsureSystemPermissionsAsync()
+        {
+#if ANDROID
+            var context = Android.App.Application.Context;
+            var notificationManager = (Android.App.NotificationManager)context.GetSystemService(Context.NotificationService);
+
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.M && notificationManager != null && !notificationManager.IsNotificationPolicyAccessGranted)
+            {
+                if (Application.Current?.MainPage != null)
+                {
+                    bool goToSettings = await Application.Current.MainPage.DisplayAlert(
+                        "Permiso requerido",
+                        "Para silenciar distracciones automáticamente, activa el permiso 'No molestar' para WorkFlow en la siguiente pantalla.",
+                        "Ir a Ajustes",
+                        "Cancelar");
+
+                    if (goToSettings)
+                    {
+                        var intent = new Intent(Settings.ActionNotificationPolicyAccessSettings);
+                        intent.AddFlags(ActivityFlags.NewTask);
+                        context.StartActivity(intent);
+                    }
+                }
+            }
+
+            if (Build.VERSION.SdkInt >= BuildVersionCodes.S)
+            {
+                var alarmManager = (Android.App.AlarmManager)context.GetSystemService(Context.AlarmService);
+                if (alarmManager != null && !alarmManager.CanScheduleExactAlarms())
+                {
+                    var intent = new Intent(Settings.ActionRequestScheduleExactAlarm);
+                    intent.SetData(Android.Net.Uri.Parse($"package:{context.PackageName}"));
+                    intent.AddFlags(ActivityFlags.NewTask);
+                    context.StartActivity(intent);
+                }
+            }
+#else
+            await Task.CompletedTask;
+#endif
+        }
+
+        private async Task<bool> RequestNotificationPermissionAsync()
+        {
+            var status = await Permissions.CheckStatusAsync<Permissions.PostNotifications>();
+            if (status != PermissionStatus.Granted)
+            {
+                status = await Permissions.RequestAsync<Permissions.PostNotifications>();
+            }
+            return status == PermissionStatus.Granted;
+        }
+
+#if ANDROID
+        public static void SetDoNotDisturbStatic(Context context, bool enable)
+        {
+            try
+            {
+                var notificationManager = (Android.App.NotificationManager)context.GetSystemService(Context.NotificationService);
+                if (Build.VERSION.SdkInt >= BuildVersionCodes.M && notificationManager != null && notificationManager.IsNotificationPolicyAccessGranted)
+                {
+                    var filter = enable ? Android.App.InterruptionFilter.Priority : Android.App.InterruptionFilter.All;
+                    notificationManager.SetInterruptionFilter(filter);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error DND: {ex.Message}");
+            }
+        }
+
+        public static void ScheduleSystemAlarmsStatic(Context context, DateTime endTimeUtc)
+        {
+            var alarmManager = (Android.App.AlarmManager)context.GetSystemService(Context.AlarmService);
+            if (alarmManager == null) return;
+
+            long endMillis = new DateTimeOffset(endTimeUtc).ToUnixTimeMilliseconds();
+            long warningMillis = new DateTimeOffset(endTimeUtc.AddMinutes(-3)).ToUnixTimeMilliseconds();
+            long nowMillis = Java.Lang.JavaSystem.CurrentTimeMillis();
+
+            var openAppIntent = context.PackageManager?.GetLaunchIntentForPackage(context.PackageName);
+            var showAppPending = openAppIntent != null
+                ? Android.App.PendingIntent.GetActivity(context, 0, openAppIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable)
+                : null;
+
+            var finishIntent = new Intent(context, typeof(FocusExtensionReceiver));
+            finishIntent.SetAction(FocusExtensionReceiver.ActionTimerFinished);
+            var finishPending = Android.App.PendingIntent.GetBroadcast(context, 301, finishIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable);
+
+            ScheduleExactTrigger(alarmManager, endMillis, finishPending, showAppPending);
+
+            if (warningMillis > nowMillis)
+            {
+                var warnIntent = new Intent(context, typeof(FocusExtensionReceiver));
+                warnIntent.SetAction(FocusExtensionReceiver.ActionThreeMinWarning);
+                var warnPending = Android.App.PendingIntent.GetBroadcast(context, 302, warnIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable);
+
+                ScheduleExactTrigger(alarmManager, warningMillis, warnPending, showAppPending);
+            }
+        }
+
+        private static void ScheduleExactTrigger(Android.App.AlarmManager alarmManager, long triggerAtMillis, Android.App.PendingIntent operation, Android.App.PendingIntent showIntent)
+        {
+            try
+            {
+                var alarmClockInfo = new Android.App.AlarmManager.AlarmClockInfo(triggerAtMillis, showIntent);
+                alarmManager.SetAlarmClock(alarmClockInfo, operation);
+            }
+            catch
+            {
+                try
+                {
+                    if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
+                        alarmManager.SetExactAndAllowWhileIdle(Android.App.AlarmType.RtcWakeup, triggerAtMillis, operation);
+                    else
+                        alarmManager.SetExact(Android.App.AlarmType.RtcWakeup, triggerAtMillis, operation);
+                }
+                catch
+                {
+                    if (Build.VERSION.SdkInt >= BuildVersionCodes.M)
+                        alarmManager.SetAndAllowWhileIdle(Android.App.AlarmType.RtcWakeup, triggerAtMillis, operation);
+                }
+            }
+        }
+
+        public static void CancelSystemAlarmsStatic(Context context)
+        {
+            var alarmManager = (Android.App.AlarmManager)context.GetSystemService(Context.AlarmService);
+            if (alarmManager == null) return;
+
+            var finishIntent = new Intent(context, typeof(FocusExtensionReceiver));
+            finishIntent.SetAction(FocusExtensionReceiver.ActionTimerFinished);
+            var finishPending = Android.App.PendingIntent.GetBroadcast(context, 301, finishIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable);
+            alarmManager.Cancel(finishPending);
+
+            var warnIntent = new Intent(context, typeof(FocusExtensionReceiver));
+            warnIntent.SetAction(FocusExtensionReceiver.ActionThreeMinWarning);
+            var warnPending = Android.App.PendingIntent.GetBroadcast(context, 302, warnIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable);
+            alarmManager.Cancel(warnPending);
+        }
+
+        public static void ShowCountdownNotificationStatic(Context context, int remainingSeconds)
+        {
+            long endTimeMillis = Java.Lang.JavaSystem.CurrentTimeMillis() + (remainingSeconds * 1000L);
+
+            var openAppIntent = context.PackageManager?.GetLaunchIntentForPackage(context.PackageName);
+            var contentPendingIntent = openAppIntent != null
+                ? Android.App.PendingIntent.GetActivity(context, 0, openAppIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable)
+                : null;
+
+            var builder = new NotificationCompat.Builder(context, FocusChannelId)
+                .SetSmallIcon(Examen2.Resource.Mipmap.appicon)
+                .SetContentTitle("WorkFlow • Modo Enfoque 🚀")
+                .SetContentText("No molestar activado • Concentración en curso")
+                .SetWhen(endTimeMillis)
+                .SetShowWhen(true)
+                .SetUsesChronometer(true)
+                .SetChronometerCountDown(true)
+                .SetOngoing(true)
+                .SetOnlyAlertOnce(true)
+                .SetCategory(NotificationCompat.CategoryAlarm)
+                .SetVisibility(NotificationCompat.VisibilityPublic)
+                .SetPriority(NotificationCompat.PriorityLow);
+
+            if (contentPendingIntent != null)
+                builder.SetContentIntent(contentPendingIntent);
+
+            NotificationManagerCompat.From(context).Notify(FocusNotificationId, builder.Build());
+        }
+
+        public static void ShowThreeMinuteExtensionNotificationStatic(Context context)
+        {
+            var yesIntent = new Intent(context, typeof(FocusExtensionReceiver));
+            yesIntent.SetAction(FocusExtensionReceiver.ActionAddFiveMinutes);
+            var yesPendingIntent = Android.App.PendingIntent.GetBroadcast(context, 201, yesIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable);
+
+            var noIntent = new Intent(context, typeof(FocusExtensionReceiver));
+            noIntent.SetAction(FocusExtensionReceiver.ActionDismissPrompt);
+            var noPendingIntent = Android.App.PendingIntent.GetBroadcast(context, 202, noIntent, Android.App.PendingIntentFlags.UpdateCurrent | Android.App.PendingIntentFlags.Immutable);
+
+            var builder = new NotificationCompat.Builder(context, PromptChannelId)
+                .SetSmallIcon(Examen2.Resource.Mipmap.appicon)
+                .SetContentTitle("⏳ Quedan 3 minutos")
+                .SetContentText("¿Quieres añadir 5 minutos más a tu sesión?")
+                .SetPriority(NotificationCompat.PriorityMax)
+                .SetCategory(NotificationCompat.CategoryAlarm)
+                .SetVisibility(NotificationCompat.VisibilityPublic)
+                .SetDefaults(NotificationCompat.DefaultAll)
+                .SetAutoCancel(true)
+                .AddAction(0, "Sí (+5 min)", yesPendingIntent)
+                .AddAction(0, "No", noPendingIntent);
+
+            NotificationManagerCompat.From(context).Notify(ExtensionPromptNotificationId, builder.Build());
+        }
+
+        public static void DismissExtensionNotificationStatic(Context context)
+        {
+            NotificationManagerCompat.From(context).Cancel(ExtensionPromptNotificationId);
+        }
+
+        public static void ShowFinishedNotificationStatic(Context context)
+        {
+            DismissExtensionNotificationStatic(context);
+
+            var builder = new NotificationCompat.Builder(context, PromptChannelId)
+                .SetSmallIcon(Examen2.Resource.Mipmap.appicon)
+                .SetContentTitle("WorkFlow • ¡Tiempo cumplido! 🎉")
+                .SetContentText("Has completado tu sesión y se desactivó No molestar.")
+                .SetAutoCancel(true)
+                .SetOngoing(false)
+                .SetVisibility(NotificationCompat.VisibilityPublic)
+                .SetPriority(NotificationCompat.PriorityHigh);
+
+            NotificationManagerCompat.From(context).Notify(FocusNotificationId, builder.Build());
+        }
+
+        public static void CancelAllFocusNotificationsStatic(Context context)
+        {
+            var nm = NotificationManagerCompat.From(context);
+            nm.Cancel(FocusNotificationId);
+            nm.Cancel(ExtensionPromptNotificationId);
+        }
+#endif
 
         // --- LÓGICA DEL CALENDARIO ---
         private void OnPreviousMonth()
@@ -477,7 +983,6 @@ namespace Examen2.ViewModels
 
                 EnrolledCourses.Add(course);
 
-                // Identificar las clases donde el usuario actual es Profesor
                 string role = await _databaseService.GetUserRoleInCourseAsync(course.Id, CurrentUser.Id);
                 if (string.Equals(role, "Teacher", StringComparison.OrdinalIgnoreCase))
                 {
@@ -495,13 +1000,11 @@ namespace Examen2.ViewModels
             {
                 bool isTeacherInThisCourse = teacherCourseIds.Contains(a.CourseId);
 
-                // 1. Si es profesor en esta clase, no mostrar tareas asignadas por él mismo en el tablón global
                 if (isTeacherInThisCourse && a.ItemType == "Tarea")
                 {
                     continue;
                 }
 
-                // 2. Si es tarea como alumno y ya venció, tampoco mostrarla en el tablón
                 if (a.ItemType == "Tarea" && a.DueDate.HasValue && a.DueDate.Value < DateTime.Now)
                 {
                     continue;

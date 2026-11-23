@@ -340,63 +340,81 @@
             </ScrollView>
 
             <!-- VISTA 4: CALENDARIO DE ENTREGAS DINÁMICO -->
-            <ScrollView IsVisible="{Binding IsCalendarioVisible}">
-                <VerticalStackLayout Spacing="16" Padding="16,16,16,100">
-                    <Grid ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
-                        <Button Grid.Column="0" Text="◀" Command="{Binding PreviousMonthCommand}" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" />
-                        <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
-                            <Label Text="{Binding CurrentMonthYearText}" FontSize="17" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
-                            <Label Text="Agenda de Entregas Programadas" FontSize="11" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
-                        </VerticalStackLayout>
-                        <Button Grid.Column="2" Text="▶" Command="{Binding NextMonthCommand}" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" />
-                    </Grid>
+            <Grid IsVisible="{Binding IsCalendarioVisible}"
+      RowDefinitions="Auto, Auto, *"
+      RowSpacing="10"
+      Padding="16,16,16,0">
 
-                    <Grid ColumnDefinitions="*,*,*,*,*,*,*" Margin="0,4">
-                        <Label Grid.Column="0" Text="D" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
-                        <Label Grid.Column="1" Text="L" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
-                        <Label Grid.Column="2" Text="M" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
-                        <Label Grid.Column="3" Text="M" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
-                        <Label Grid.Column="4" Text="J" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
-                        <Label Grid.Column="5" Text="V" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
-                        <Label Grid.Column="6" Text="S" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
-                    </Grid>
-                    <CollectionView ItemsSource="{Binding CalendarDays}" SelectionMode="None">
-                        <CollectionView.ItemsLayout>
-                            <GridItemsLayout Orientation="Vertical" Span="7" VerticalItemSpacing="8" HorizontalItemSpacing="6" />
-                        </CollectionView.ItemsLayout>
-                        <CollectionView.ItemTemplate>
-                            <DataTemplate>
-                                <Border HeightRequest="95"
-                    StrokeShape="RoundRectangle 10"
-                    StrokeThickness="{Binding BorderThickness}"
-                    Stroke="{Binding BorderColor}"
-                    IsEnabled="{Binding HasTask}"
-                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                        Command="{Binding Source={x:Reference mainPage}, Path=BindingContext.OpenCalendarDayCommand}"
-                        CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
+                <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
+                    <Button Grid.Column="0" Text="◀" Command="{Binding PreviousMonthCommand}" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" />
+                    <VerticalStackLayout Grid.Column="1" Spacing="2" HorizontalOptions="Center" VerticalOptions="Center">
+                        <Label Text="{Binding CurrentMonthYearText}" FontSize="17" FontAttributes="Bold" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                        <Label Text="Agenda de Entregas Programadas" FontSize="11" HorizontalOptions="Center" TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                    </VerticalStackLayout>
+                    <Button Grid.Column="2" Text="▶" Command="{Binding NextMonthCommand}" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" />
+                </Grid>
 
-                                    <Grid RowDefinitions="*, Auto" Padding="8">
-                                        <Label Grid.Row="0"
-                           Text="{Binding DayNumberText}"
-                           FontSize="12"
-                           FontAttributes="{Binding DayFontAttributes}"
-                           TextColor="{Binding DayTextColor}" />
-                                        <BoxView Grid.Row="1"
-                             HeightRequest="4"
-                             CornerRadius="2"
-                             Color="{Binding TaskIndicatorColor}"
-                             IsVisible="{Binding HasTask}"
-                             Margin="0,0,0,2" />
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </VerticalStackLayout>
-            </ScrollView>
+                <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*,*,*" Margin="0,2">
+                    <Label Grid.Column="0" Text="D" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
+                    <Label Grid.Column="1" Text="L" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
+                    <Label Grid.Column="2" Text="M" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
+                    <Label Grid.Column="3" Text="M" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
+                    <Label Grid.Column="4" Text="J" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
+                    <Label Grid.Column="5" Text="V" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
+                    <Label Grid.Column="6" Text="S" HorizontalOptions="Center" FontAttributes="Bold" TextColor="#64748B"/>
+                </Grid>
+
+                <CollectionView Grid.Row="2"
+                    ItemsSource="{Binding CalendarDays}"
+                    SelectionMode="None"
+                    VerticalScrollBarVisibility="Never">
+                    <CollectionView.ItemsLayout>
+                        <GridItemsLayout Orientation="Vertical" Span="7" VerticalItemSpacing="8" HorizontalItemSpacing="6" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.Footer>
+                        <BoxView HeightRequest="95" Color="Transparent" />
+                    </CollectionView.Footer>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Border HeightRequest="95"
+                        StrokeShape="RoundRectangle 10"
+                        StrokeThickness="{Binding BorderThickness}"
+                        Stroke="{Binding BorderColor}"
+                        IsEnabled="{Binding HasTask}"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                            Command="{Binding Source={x:Reference mainPage}, Path=BindingContext.OpenCalendarDayCommand}"
+                            CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+
+                                <Grid RowDefinitions="*, Auto" Padding="8">
+                                    <Label Grid.Row="0"
+                               Text="{Binding DayNumberText}"
+                               FontSize="12"
+                               FontAttributes="{Binding DayFontAttributes}"
+                               TextColor="{Binding DayTextColor}" />
+
+                                    <VerticalStackLayout Grid.Row="1"
+                                             BindableLayout.ItemsSource="{Binding DayTasks}"
+                                             Spacing="3"
+                                             VerticalOptions="End"
+                                             IsVisible="{Binding HasTask}"
+                                             Margin="0,0,0,2">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate>
+                                                <BoxView HeightRequest="3.5"
+                                             CornerRadius="1.75"
+                                             Color="{Binding StatusColor}" />
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Grid>
 
             <!-- MENÚ DESPLEGABLE FLOTANTE DE PERFIL -->
             <Border HorizontalOptions="End" VerticalOptions="Start" Margin="0,10,20,0" WidthRequest="240" BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}" Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}" StrokeThickness="1" IsVisible="{Binding IsProfileMenuVisible}" ZIndex="100">

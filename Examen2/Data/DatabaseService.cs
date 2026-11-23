@@ -517,6 +517,50 @@ namespace Examen2.Data
             return response.Models.FirstOrDefault();
         }
 
+        public async Task<HashSet<int>> GetCompletedTaskIdsAsync(int userId)
+        {
+            await InitAsync();
+            try
+            {
+                var response = await _client.From<TaskSubmission>()
+                                            .Where(s => s.UserId == userId)
+                                            .Get();
+
+                var completedIds = new HashSet<int>();
+                foreach (var sub in response.Models)
+                {
+                    if (sub.Grade.HasValue || !string.IsNullOrWhiteSpace(sub.FilePath) || sub.SubmittedAt != default)
+                    {
+                        completedIds.Add(sub.ContentItemId);
+                    }
+                }
+
+                return completedIds;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al obtener tareas entregadas: {ex.Message}");
+                return new HashSet<int>();
+            }
+        }
+
+        public async Task<HashSet<int>> GetTeacherCourseIdsAsync(int userId)
+        {
+            await InitAsync();
+            try
+            {
+                var response = await _client.From<CourseMember>()
+                                            .Where(m => m.UserId == userId && m.Role == "Teacher")
+                                            .Get();
+
+                return response.Models.Select(m => m.CourseId).ToHashSet();
+            }
+            catch
+            {
+                return new HashSet<int>();
+            }
+        }
+
         public async Task<(bool Success, string Message)> SaveTaskSubmissionAsync(TaskSubmission submission)
         {
             await InitAsync();

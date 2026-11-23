@@ -246,12 +246,17 @@ namespace Examen2.ViewModels
             set { _currentMonthYearText = value; OnPropertyChanged(); }
         }
 
-        public ObservableCollection<CalendarDayModel> CalendarDays { get; set; } = new();
+        private ObservableCollection<CalendarDayModel> _calendarDays = new();
+        public ObservableCollection<CalendarDayModel> CalendarDays
+        {
+            get => _calendarDays;
+            set { _calendarDays = value; OnPropertyChanged(); }
+        }
 
         // --- PROPIEDADES DE LA INTERFAZ ---
         public ObservableCollection<Course> EnrolledCourses { get; set; }
         public string NextDeadlineMessage { get; set; }
-        private List<ActivityItemViewModel> _allUserTasksForCalendar = new();
+        private Dictionary<DateTime, List<ActivityItemViewModel>> _tasksByDate = new();
 
         // --- COMANDOS ---
         public ICommand NavigateHomeCommand { get; }
@@ -373,8 +378,6 @@ namespace Examen2.ViewModels
             OnPropertyChanged(nameof(CalendarioTabColor));
             OnPropertyChanged(nameof(CalendarioIndicatorColor));
             OnPropertyChanged(nameof(CalendarioFontAttributes));
-
-            if (IsCalendarioVisible) LoadCalendarDays();
         }
 
         // ==========================================
@@ -855,38 +858,42 @@ namespace Examen2.ViewModels
             int daysInMonth = DateTime.DaysInMonth(_currentYear, _currentMonthIndex);
             var firstDayOfWeek = (int)new DateTime(_currentYear, _currentMonthIndex, 1).DayOfWeek;
 
-            CalendarDays.Clear();
+            var days = new List<CalendarDayModel>(firstDayOfWeek + daysInMonth);
 
             for (int i = 0; i < firstDayOfWeek; i++)
             {
-                CalendarDays.Add(new CalendarDayModel { DayNumber = 0, HasTask = false });
+                days.Add(new CalendarDayModel { DayNumber = 0, HasTask = false });
             }
 
             for (int day = 1; day <= daysInMonth; day++)
             {
                 var currentDate = new DateTime(_currentYear, _currentMonthIndex, day);
-                var tasksForThisDay = _allUserTasksForCalendar
-                    .Where(t => t.OriginalItem.DueDate.HasValue && t.OriginalItem.DueDate.Value.Date == currentDate.Date)
-                    .ToList();
+                _tasksByDate.TryGetValue(currentDate, out var tasksForThisDay);
 
-                bool hasTask = tasksForThisDay.Count > 0;
-                string taskColor = "Transparent";
+                bool hasTask = tasksForThisDay != null && tasksForThisDay.Count > 0;
+                string borderColor = "Transparent";
 
                 if (hasTask)
                 {
-                    bool isOverdue = currentDate.Date < DateTime.Now.Date;
-                    taskColor = isOverdue ? "#F87171" : "#5EEAD4";
+                    if (tasksForThisDay.Any(t => t.StatusColor == "#F87171"))
+                        borderColor = "#F87171"; // Rojo: al menos una vencida
+                    else if (tasksForThisDay.Any(t => t.StatusColor == "#FACC15"))
+                        borderColor = "#FACC15"; // Amarillo: al menos una pendiente
+                    else
+                        borderColor = "#4ADE80"; // Verde: todas entregadas/calificadas
                 }
 
-                CalendarDays.Add(new CalendarDayModel
+                days.Add(new CalendarDayModel
                 {
                     Date = currentDate,
                     DayNumber = day,
                     HasTask = hasTask,
-                    TaskIndicatorColor = taskColor,
-                    DayTasks = tasksForThisDay
+                    TaskIndicatorColor = borderColor,
+                    DayTasks = tasksForThisDay ?? new List<ActivityItemViewModel>()
                 });
             }
+
+            CalendarDays = new ObservableCollection<CalendarDayModel>(days);
         }
 
         private async Task OpenCalendarDayAsync(CalendarDayModel dayModel)
@@ -988,13 +995,13 @@ namespace Examen2.ViewModels
             {
                 EnrolledCourses.Clear();
                 GlobalRecentActivities.Clear();
-                _allUserTasksForCalendar.Clear();
+                _tasksByDate.Clear();
                 LoadCalendarDays();
                 return;
             }
 
             var courses = await _databaseService.GetCoursesAsync(CurrentUser.Id);
-            var teacherCourseIds = new HashSet<int>();
+            var teacherCourseIds = await _databaseService.GetTeacherCourseIdsAsync(CurrentUser.Id);
 
             EnrolledCourses.Clear();
             foreach (var course in courses)
@@ -1005,17 +1012,13 @@ namespace Examen2.ViewModels
                 }
 
                 EnrolledCourses.Add(course);
-
-                string role = await _databaseService.GetUserRoleInCourseAsync(course.Id, CurrentUser.Id);
-                if (string.Equals(role, "Teacher", StringComparison.OrdinalIgnoreCase))
-                {
-                    teacherCourseIds.Add(course.Id);
-                }
             }
 
             var activities = await _databaseService.GetGlobalActivitiesAsync(CurrentUser.Id);
+            var completedTaskIds = await _databaseService.GetCompletedTaskIdsAsync(CurrentUser.Id);
+
             GlobalRecentActivities.Clear();
-            _allUserTasksForCalendar.Clear();
+            _tasksByDate.Clear();
 
             int colorIndex = 0;
             string[] vibrantColors = { "#5EEAD4", "#5C93F9", "#86EFAC" };
@@ -1026,18 +1029,51 @@ namespace Examen2.ViewModels
                 var parentCourse = courses.FirstOrDefault(c => c.Id == a.CourseId);
                 string courseName = parentCourse != null ? parentCourse.CourseName : "Clase";
 
-                // Guardar todas las tareas con fecha límite para el calendario
+                // Evaluar estado semáforo para el calendario
                 if (a.ItemType == "Tarea" && a.DueDate.HasValue)
                 {
-                    _allUserTasksForCalendar.Add(new ActivityItemViewModel
+                    string statusColor;
+                    string statusLabel;
+
+                    if (isTeacherInThisCourse)
+                    {
+                        bool isClosed = a.DueDate.Value < DateTime.Now;
+                        statusColor = isClosed ? "#4ADE80" : "#FACC15";
+                        statusLabel = isClosed ? $"Cerrada • {a.DueDate.Value:HH:mm}" : $"Activa • {a.DueDate.Value:HH:mm}";
+                    }
+                    else if (completedTaskIds.Contains(a.Id))
+                    {
+                        statusColor = "#4ADE80"; // Verde: entregada o calificada
+                        statusLabel = $"Entregada • {a.DueDate.Value:HH:mm}";
+                    }
+                    else if (a.DueDate.Value < DateTime.Now)
+                    {
+                        statusColor = "#F87171"; // Rojo: vencida sin entregar
+                        statusLabel = $"Vencida • {a.DueDate.Value:HH:mm}";
+                    }
+                    else
+                    {
+                        statusColor = "#FACC15"; // Amarillo: pendiente de entrega
+                        statusLabel = $"Pendiente • {a.DueDate.Value:HH:mm}";
+                    }
+
+                    var dateKey = a.DueDate.Value.Date;
+                    if (!_tasksByDate.TryGetValue(dateKey, out var dayList))
+                    {
+                        dayList = new List<ActivityItemViewModel>();
+                        _tasksByDate[dateKey] = dayList;
+                    }
+
+                    dayList.Add(new ActivityItemViewModel
                     {
                         OriginalItem = a,
                         DisplayTitle = a.Title,
                         Subtitle = $"{courseName} • {(isTeacherInThisCourse ? "Clase impartida" : "Clase inscrita")}",
-                        GradientStartColor = a.DueDate.Value < DateTime.Now ? "#F87171" : "#5EEAD4",
+                        GradientStartColor = statusColor,
+                        StatusColor = statusColor,
                         IconString = "📋",
                         HasDueDate = true,
-                        DueDateString = $"Hora límite: {a.DueDate.Value:HH:mm}"
+                        DueDateString = statusLabel
                     });
                 }
 
@@ -1051,21 +1087,12 @@ namespace Examen2.ViewModels
                     continue;
                 }
 
-                string gradient = "#5EEAD4";
-
-                if (a.ItemType == "Tarea")
+                string gradient = a.ItemType switch
                 {
-                    gradient = vibrantColors[colorIndex % vibrantColors.Length];
-                    colorIndex++;
-                }
-                else if (a.ItemType == "Material")
-                {
-                    gradient = "#5EEAD4";
-                }
-                else
-                {
-                    gradient = "#86EFAC";
-                }
+                    "Tarea" => vibrantColors[colorIndex++ % vibrantColors.Length],
+                    "Material" => "#5EEAD4",
+                    _ => "#86EFAC"
+                };
 
                 string icon = a.ItemType switch
                 {
@@ -1080,6 +1107,7 @@ namespace Examen2.ViewModels
                     DisplayTitle = $"{a.ItemType}: {a.Title}",
                     Subtitle = $"{courseName} • Publicado el {a.CreatedAt:dd MMM}",
                     GradientStartColor = gradient,
+                    StatusColor = gradient,
                     IconString = icon,
                     HasDueDate = a.DueDate.HasValue,
                     DueDateString = a.DueDate.HasValue ? $"Entrega: {a.DueDate.Value:dd/MM/yyyy HH:mm}" : ""
@@ -1265,6 +1293,7 @@ namespace Examen2.ViewModels
         public string DisplayTitle { get; set; }
         public string Subtitle { get; set; }
         public string GradientStartColor { get; set; }
+        public string StatusColor { get; set; } = "#FACC15";
         public string IconString { get; set; }
         public bool HasDueDate { get; set; }
         public string DueDateString { get; set; }

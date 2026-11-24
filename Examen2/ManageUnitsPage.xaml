@@ -96,6 +96,16 @@
                         </CollectionView>
                     </VerticalStackLayout>
                 </Border>
+
+                <Button x:Name="BtnFinishSetup"
+                        Text="Terminar configuración"
+                        Clicked="OnFinishSetupClicked"
+                        BackgroundColor="#61E5CE"
+                        TextColor="#0F172A"
+                        FontAttributes="Bold"
+                        HeightRequest="48"
+                        CornerRadius="12"
+                        Margin="0,4,0,20" />
             </VerticalStackLayout>
         </ScrollView>
     </Grid>

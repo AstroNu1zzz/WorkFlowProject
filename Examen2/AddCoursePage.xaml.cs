@@ -100,7 +100,17 @@ public partial class AddCoursePage : ContentPage
         if (success)
         {
             await _mainViewModel.RefreshCoursesAsync();
-            await Navigation.PopAsync();
+            var courses = await _databaseService.GetCoursesAsync(_mainViewModel.CurrentUser.Id);
+            var createdCourse = courses?.FirstOrDefault(c => c.CourseCode == courseCode);
+
+            if (createdCourse != null)
+            {
+                await Navigation.PushAsync(new ManageUnitsPage(createdCourse.Id, _databaseService));
+            }
+            else
+            {
+                await Navigation.PopAsync();
+            }
         }
         else
         {

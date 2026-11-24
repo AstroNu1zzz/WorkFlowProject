@@ -6,15 +6,22 @@ namespace Examen2;
 
 public partial class MainPage : ContentPage
 {
+    private readonly DatabaseService _databaseService;
+    private readonly MainViewModel _mainViewModel;
+
     public MainPage(DatabaseService databaseService, MainViewModel mainViewModel)
     {
         InitializeComponent();
+        _databaseService = databaseService;
+        _mainViewModel = mainViewModel;
         BindingContext = mainViewModel;
     }
 
     public MainPage(DatabaseService databaseService, EmailService emailService, MainViewModel mainViewModel)
     {
         InitializeComponent();
+        _databaseService = databaseService;
+        _mainViewModel = mainViewModel;
         BindingContext = mainViewModel;
     }
 
@@ -25,5 +32,10 @@ public partial class MainPage : ContentPage
         {
             await viewModel.RefreshCoursesAsync();
         }
+    }
+
+    private async void OnKardexTapped(object sender, TappedEventArgs e)
+    {
+        await Navigation.PushAsync(new StudentAcademicPage(_databaseService, _mainViewModel));
     }
 }

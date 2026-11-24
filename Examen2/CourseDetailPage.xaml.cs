@@ -21,6 +21,7 @@ public class UnitGroupViewModel : List<FeedPostViewModel>
 public class FeedPostViewModel
 {
     public ClassContentItem SourceItem { get; }
+    private readonly string _courseAccentHex;
 
     public string Title => $"{SourceItem.ItemType}: {SourceItem.Title}";
     public string Description => SourceItem.Description;
@@ -49,44 +50,28 @@ public class FeedPostViewModel
 
     public Color IconBgColor => SourceItem.ItemType switch
     {
-        "Tarea" => Color.FromArgb("#D93025"),
-        "Material" => Color.FromArgb("#1A73E8"),
-        _ => Color.FromArgb("#1E8E3E")
+        "Tarea" => Color.FromArgb("#EF4444"),
+        "Material" => Color.FromArgb("#5C93F9"),
+        _ => Color.FromArgb("#5EEAD4")
     };
 
-    public Brush CardGradientBrush
+    public Color CourseAccentColor
     {
         get
         {
-            var brush = new LinearGradientBrush
+            if (!string.IsNullOrWhiteSpace(_courseAccentHex))
             {
-                StartPoint = new Point(0, 0),
-                EndPoint = new Point(0, 1)
-            };
-
-            if (SourceItem.ItemType == "Tarea") // ROJO
-            {
-                brush.GradientStops.Add(new GradientStop(Color.FromArgb("#FADBD8"), 0.0f));
-                brush.GradientStops.Add(new GradientStop(Color.FromArgb("#FFFFFF"), 0.8f));
-            }
-            else if (SourceItem.ItemType == "Material") // AZUL
-            {
-                brush.GradientStops.Add(new GradientStop(Color.FromArgb("#D6EAF8"), 0.0f));
-                brush.GradientStops.Add(new GradientStop(Color.FromArgb("#FFFFFF"), 0.8f));
-            }
-            else // ANUNCIO - VERDE
-            {
-                brush.GradientStops.Add(new GradientStop(Color.FromArgb("#D1F2EB"), 0.0f));
-                brush.GradientStops.Add(new GradientStop(Color.FromArgb("#FFFFFF"), 0.8f));
+                try { return Color.FromArgb(_courseAccentHex); } catch { }
             }
 
-            return brush;
+            return Color.FromArgb("#5EEAD4");
         }
     }
 
-    public FeedPostViewModel(ClassContentItem item)
+    public FeedPostViewModel(ClassContentItem item, string courseAccentHex = null)
     {
         SourceItem = item;
+        _courseAccentHex = courseAccentHex;
     }
 }
 
@@ -126,6 +111,13 @@ public partial class CourseDetailPage : ContentPage
                           ?? Application.Current?.Handler?.MauiContext?.Services.GetService<MainViewModel>();
     }
 
+    private string GetCourseAccentColor()
+    {
+        string[] palette = { "#5EEAD4", "#5C93F9", "#86EFAC", "#FBBF24", "#A78BFA" };
+        int index = Math.Abs(Course?.Id ?? 0) % palette.Length;
+        return palette[index];
+    }
+
     private async Task LoadCourseContentAsync()
     {
         EnsureServices();
@@ -152,13 +144,14 @@ public partial class CourseDetailPage : ContentPage
         // 3. Cargar unidades y publicaciones de Supabase
         var units = await _databaseService.GetCourseUnitsAsync(Course.Id);
         var items = await _databaseService.GetCourseContentItemsAsync(Course.Id);
+        string accentHex = GetCourseAccentColor();
 
         FeedPosts.Clear();
         AssignmentPosts.Clear();
 
         foreach (var item in items)
         {
-            var vm = new FeedPostViewModel(item);
+            var vm = new FeedPostViewModel(item, accentHex);
             FeedPosts.Add(vm);
 
             if (item.ItemType == "Tarea")
@@ -173,7 +166,7 @@ public partial class CourseDetailPage : ContentPage
         foreach (var unit in units)
         {
             var unitItems = items.Where(i => i.UnitId == unit.Id || (i.CreatedAt.Date >= unit.StartDate.Date && i.CreatedAt.Date <= unit.EndDate.Date))
-                                  .Select(i => new FeedPostViewModel(i))
+                                  .Select(i => new FeedPostViewModel(i, accentHex))
                                   .ToList();
 
             if (unitItems.Any())
@@ -187,7 +180,7 @@ public partial class CourseDetailPage : ContentPage
 
         // Elementos sin unidad asignada o publicados fuera del rango de fechas
         var unassignedItems = items.Where(i => !i.UnitId.HasValue && !units.Any(u => i.CreatedAt.Date >= u.StartDate.Date && i.CreatedAt.Date <= u.EndDate.Date))
-                                   .Select(i => new FeedPostViewModel(i))
+                                   .Select(i => new FeedPostViewModel(i, accentHex))
                                    .ToList();
 
         if (unassignedItems.Any())

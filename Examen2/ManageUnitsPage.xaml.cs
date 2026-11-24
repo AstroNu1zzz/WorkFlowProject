@@ -1,4 +1,3 @@
-
 using Examen2.Data;
 
 namespace Examen2;
@@ -152,6 +151,22 @@ public partial class ManageUnitsPage : ContentPage
         if (ok)
         {
             await RefreshCriteriaAsync();
+        }
+    }
+
+    private async void OnFinishSetupClicked(object sender, EventArgs e)
+    {
+        int userId = Preferences.Default.Get("CurrentUserId", 0);
+        var courses = await _databaseService.GetCoursesAsync(userId);
+        var course = courses?.FirstOrDefault(c => c.Id == _courseId);
+
+        if (course != null)
+        {
+            await Navigation.PushAsync(new CourseDetailPage(course, _databaseService));
+        }
+        else
+        {
+            await DisplayAlert("Error", "No se pudo encontrar la clase creada.", "OK");
         }
     }
 }

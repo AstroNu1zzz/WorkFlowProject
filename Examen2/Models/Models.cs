@@ -1,6 +1,6 @@
 ﻿using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
-using System.Text.Json.Serialization;
+using Newtonsoft.Json;
 
 namespace Examen2.Data
 {
@@ -8,28 +8,35 @@ namespace Examen2.Data
     public class User : BaseModel
     {
         [PrimaryKey("id", false)]
+        [JsonProperty("id")]
         public int Id { get; set; }
 
         [Column("username")]
-        public string Username { get; set; }
+        [JsonProperty("username")]
+        public string Username { get; set; } = string.Empty;
 
         [Column("email")]
-        public string Email { get; set; }
+        [JsonProperty("email")]
+        public string Email { get; set; } = string.Empty;
 
-        [Column("password")]
-        public string Password { get; set; }
+        [JsonIgnore]
+        public string Password { get; set; } = string.Empty;
+
+        [Column("profile_picture_path")]
+        [JsonProperty("profile_picture_path")]
+        public string? ProfilePicturePath { get; set; }
 
         [Column("is_2fa_enabled")]
+        [JsonProperty("is_2fa_enabled")]
         public bool Is2FAEnabled { get; set; }
 
         [Column("is_email_verified")]
+        [JsonProperty("is_email_verified")]
         public bool IsEmailVerified { get; set; }
 
-        [Column("app_theme")]
+        [Column("app_theme_preference")]
+        [JsonProperty("app_theme_preference")]
         public string AppThemePreference { get; set; } = "Sistema";
-
-        [Column("profile_picture_path")]
-        public string ProfilePicturePath { get; set; }
     }
 
     [Table("courses")]

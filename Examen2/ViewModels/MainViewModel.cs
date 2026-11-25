@@ -276,7 +276,6 @@ namespace Examen2.ViewModels
         public ICommand OpenActivityCommand { get; }
         public ICommand OpenCalendarDayCommand { get; }
 
-        // Comandos MVVM para Tabs, Temporizador y Calendario
         public ICommand SelectTabCommand { get; }
         public ICommand SetTimerMinutesCommand { get; }
         public ICommand StartTimerCommand { get; }

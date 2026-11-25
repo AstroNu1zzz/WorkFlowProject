@@ -43,12 +43,24 @@ public partial class TwoFactorPage : ContentPage
         _isVerifying = true;
         try
         {
-            var (isValid, errorMsg) = await _emailService.Verify2FACodeAsync(_user.Email, enteredCode);
+            var (isValid, token, errorMsg) = await _emailService.Verify2FACodeAsync(_user.Email, enteredCode);
 
             if (!isValid)
             {
                 await DisplayAlert("Error", string.IsNullOrWhiteSpace(errorMsg) ? "Código de verificación incorrecto." : errorMsg, "OK");
                 return;
+            }
+
+            if (_onSuccessCallback == null && string.IsNullOrWhiteSpace(token))
+            {
+                await DisplayAlert("Error de sesión", "El servidor no devolvió un token de autenticación válido.", "OK");
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(token))
+            {
+                _databaseService.SetAuthToken(token);
+                await SecureStorage.Default.SetAsync("AuthJwtToken", token);
             }
 
             Preferences.Default.Set("IsLoggedIn", true);

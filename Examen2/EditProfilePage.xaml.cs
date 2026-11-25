@@ -141,7 +141,7 @@ public partial class EditProfilePage : ContentPage
 
         if (string.IsNullOrEmpty(currentPasswordInput)) return;
 
-        if (currentPasswordInput != user.Password)
+        if (!await _databaseService.VerifyUserPasswordAsync(user.Id, currentPasswordInput))
         {
             await DisplayAlert("Acceso Denegado", "La contraseña ingresada es incorrecta.", "OK");
             return;
@@ -241,8 +241,7 @@ public partial class EditProfilePage : ContentPage
             return;
         }
 
-        user.Password = newPassword;
-        bool ok = await _databaseService.UpdateUserAsync(user);
+        bool ok = await _databaseService.UpdateUserPasswordAsync(user.Id, newPassword);
 
         if (ok)
         {

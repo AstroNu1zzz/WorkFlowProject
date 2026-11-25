@@ -1,6 +1,7 @@
 ﻿using Supabase;
 using Supabase.Postgrest;
 using Examen2.ViewModels;
+using Newtonsoft.Json;
 
 namespace Examen2.Data
 {
@@ -8,6 +9,7 @@ namespace Examen2.Data
     {
         private readonly Supabase.Client _client;
         private bool _isInitialized;
+        private string _authToken;
 
         public DatabaseService()
         {
@@ -25,9 +27,35 @@ namespace Examen2.Data
 
         private async Task InitAsync()
         {
-            if (_isInitialized) return;
-            await _client.InitializeAsync();
-            _isInitialized = true;
+            if (!_isInitialized)
+            {
+                await _client.InitializeAsync();
+                _isInitialized = true;
+            }
+
+            ApplyAuthHeader();
+        }
+
+        public void SetAuthToken(string jwt)
+        {
+            _authToken = jwt;
+            ApplyAuthHeader();
+        }
+
+        private void ApplyAuthHeader()
+        {
+            if (_client == null) return;
+
+            if (string.IsNullOrWhiteSpace(_authToken))
+            {
+                _client.Postgrest.Options.Headers.Remove("Authorization");
+                _client.Storage.Headers.Remove("Authorization");
+            }
+            else
+            {
+                _client.Postgrest.Options.Headers["Authorization"] = $"Bearer {_authToken}";
+                _client.Storage.Headers["Authorization"] = $"Bearer {_authToken}";
+            }
         }
 
         // --- SUBIDA GENÉRICA DE ARCHIVOS A SUPABASE STORAGE ---
@@ -178,7 +206,7 @@ namespace Examen2.Data
             return response.Models.FirstOrDefault()?.Role ?? "Student";
         }
 
-        // --- OBTENER ALUMNOS DE LA CLASE ---
+        // --- OBTENER ALUMNOS DE LA CLASE (VÍA RPC SEGURA) ---
         public async Task<List<User>> GetCourseStudentsAsync(int courseId)
         {
             await InitAsync();
@@ -189,14 +217,15 @@ namespace Examen2.Data
             var userIds = memberResponse.Models.Select(m => m.UserId).ToList();
             if (!userIds.Any()) return new List<User>();
 
-            var usersResponse = await _client.From<User>()
-                                              .Filter("id", Constants.Operator.In, userIds)
-                                              .Get();
+            var rpc = await _client.Rpc("rpc_get_users_by_ids", new Dictionary<string, object>
+            {
+                { "p_user_ids", userIds }
+            });
 
-            return usersResponse.Models;
+            return JsonConvert.DeserializeObject<List<User>>(rpc.Content) ?? new List<User>();
         }
 
-        // --- OBTENER PROFESORES DE LA CLASE ---
+        // --- OBTENER PROFESORES DE LA CLASE (VÍA RPC SEGURA) ---
         public async Task<List<User>> GetCourseTeachersAsync(int courseId)
         {
             await InitAsync();
@@ -207,58 +236,54 @@ namespace Examen2.Data
             var userIds = memberResponse.Models.Select(m => m.UserId).ToList();
             if (!userIds.Any()) return new List<User>();
 
-            var usersResponse = await _client.From<User>()
-                                              .Filter("id", Constants.Operator.In, userIds)
-                                              .Get();
+            var rpc = await _client.Rpc("rpc_get_users_by_ids", new Dictionary<string, object>
+            {
+                { "p_user_ids", userIds }
+            });
 
-            return usersResponse.Models;
+            return JsonConvert.DeserializeObject<List<User>>(rpc.Content) ?? new List<User>();
         }
 
-        // --- AUTENTICACIÓN Y USUARIOS ---
-        public async Task<User> ValidateUserAsync(string usernameOrEmail, string password)
-        {
-            await InitAsync();
-            var response = await _client.From<User>()
-                                       .Where(u => u.Password == password && (u.Username == usernameOrEmail || u.Email == usernameOrEmail))
-                                       .Get();
-            return response.Models.FirstOrDefault();
-        }
-
+        // --- AUTENTICACIÓN Y USUARIOS (VÍA RPC SEGURAS) ---
         public async Task<User> GetUserByUsernameOrEmailAsync(string usernameOrEmail)
         {
             await InitAsync();
-            var response = await _client.From<User>()
-                                       .Where(u => u.Username == usernameOrEmail || u.Email == usernameOrEmail)
-                                       .Get();
-            return response.Models.FirstOrDefault();
+            var rpc = await _client.Rpc("rpc_get_user_by_identifier", new Dictionary<string, object>
+            {
+                { "p_identifier", usernameOrEmail }
+            });
+
+            return JsonConvert.DeserializeObject<List<User>>(rpc.Content)?.FirstOrDefault();
         }
 
         public async Task<User> GetUserByIdAsync(int id)
         {
             await InitAsync();
-            var response = await _client.From<User>()
-                                       .Where(u => u.Id == id)
-                                       .Get();
-            return response.Models.FirstOrDefault();
+            var rpc = await _client.Rpc("rpc_get_user_by_id", new Dictionary<string, object>
+            {
+                { "p_user_id", id }
+            });
+
+            return JsonConvert.DeserializeObject<List<User>>(rpc.Content)?.FirstOrDefault();
         }
 
         public async Task<bool> UserExistsAsync(string username, string email)
         {
-            await InitAsync();
-            var response = await _client.From<User>()
-                                       .Where(u => u.Username == username || u.Email == email)
-                                       .Get();
-            return response.Models.Any();
+            return await GetUserByUsernameOrEmailAsync(username) != null
+                || await GetUserByUsernameOrEmailAsync(email) != null;
         }
 
         public async Task<bool> RegisterUserAsync(User newUser)
         {
             await InitAsync();
-            if (await UserExistsAsync(newUser.Username, newUser.Email))
-                return false;
+            var rpc = await _client.Rpc("rpc_register_user", new Dictionary<string, object>
+            {
+                { "p_username", newUser.Username },
+                { "p_email", newUser.Email },
+                { "p_password", newUser.Password }
+            });
 
-            var response = await _client.From<User>().Insert(newUser);
-            return response.Models.Count > 0;
+            return bool.TryParse(rpc.Content?.Trim('"'), out bool created) && created;
         }
 
         public async Task<bool> UpdateUserAsync(User user)
@@ -266,14 +291,60 @@ namespace Examen2.Data
             await InitAsync();
             try
             {
-                var response = await _client.From<User>()
-                                           .Where(u => u.Id == user.Id)
-                                           .Update(user);
-                return response.Models.Count > 0;
+                var rpc = await _client.Rpc("rpc_update_user_profile", new Dictionary<string, object>
+                {
+                    { "p_user_id", user.Id },
+                    { "p_username", user.Username },
+                    { "p_email", user.Email },
+                    { "p_profile_picture_path", user.ProfilePicturePath },
+                    { "p_is_2fa_enabled", user.Is2FAEnabled },
+                    { "p_is_email_verified", user.IsEmailVerified },
+                    { "p_app_theme_preference", user.AppThemePreference ?? "Sistema" }
+                });
+
+                return bool.TryParse(rpc.Content?.Trim('"'), out bool updated) && updated;
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"Error al actualizar usuario: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> VerifyUserPasswordAsync(int userId, string password)
+        {
+            await InitAsync();
+            try
+            {
+                var rpc = await _client.Rpc("rpc_verify_password", new Dictionary<string, object>
+                {
+                    { "p_user_id", userId },
+                    { "p_password", password }
+                });
+
+                return bool.TryParse(rpc.Content?.Trim('"'), out bool valid) && valid;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        public async Task<bool> UpdateUserPasswordAsync(int userId, string newPassword)
+        {
+            await InitAsync();
+            try
+            {
+                var rpc = await _client.Rpc("rpc_change_password", new Dictionary<string, object>
+                {
+                    { "p_user_id", userId },
+                    { "p_new_password", newPassword }
+                });
+
+                return bool.TryParse(rpc.Content?.Trim('"'), out bool updated) && updated;
+            }
+            catch
+            {
                 return false;
             }
         }
@@ -390,8 +461,7 @@ namespace Examen2.Data
                 if (user == null) return false;
 
                 user.Is2FAEnabled = isEnabled;
-                var response = await _client.From<User>().Update(user);
-                return response.Models.Count > 0;
+                return await UpdateUserAsync(user);
             }
             catch (Exception ex)
             {

@@ -10,6 +10,7 @@ public partial class SettingsPage : ContentPage
     private EmailService _emailService;
     private MainViewModel _mainViewModel;
     private bool _isLoadingTheme;
+    private bool _isLoading2FA;
 
     public SettingsPage(DatabaseService databaseService = null, EmailService emailService = null, MainViewModel mainViewModel = null)
     {
@@ -43,6 +44,10 @@ public partial class SettingsPage : ContentPage
             LblUsername.Text = user.Username;
             LblEmail.Text = user.Email;
 
+            _isLoading2FA = true;
+            Switch2FA.IsToggled = user.Is2FAEnabled;
+            _isLoading2FA = false;
+
             if (!string.IsNullOrWhiteSpace(user.ProfilePicturePath))
             {
                 ImgAvatar.Source = ImageSource.FromUri(new Uri(user.ProfilePicturePath));
@@ -59,6 +64,47 @@ public partial class SettingsPage : ContentPage
                     LblAvatarInitial.Text = user.Username.Substring(0, 1).ToUpper();
                 }
             }
+        }
+    }
+
+    private async void On2FAToggled(object sender, ToggledEventArgs e)
+    {
+        if (_isLoading2FA) return;
+
+        EnsureServices();
+        var user = _mainViewModel?.CurrentUser;
+        if (user == null || _databaseService == null) return;
+
+        bool newState = e.Value;
+
+        if (newState && !user.IsEmailVerified)
+        {
+            _isLoading2FA = true;
+            Switch2FA.IsToggled = false;
+            _isLoading2FA = false;
+
+            await DisplayAlert(
+                "Correo sin verificar",
+                "Primero verifica tu correo electrónico en la sección Perfil antes de activar la verificación en dos pasos.",
+                "OK");
+            return;
+        }
+
+        Switch2FA.IsEnabled = false;
+        bool updated = await _databaseService.Update2FAStatusAsync(user.Id, newState);
+        Switch2FA.IsEnabled = true;
+
+        if (updated)
+        {
+            user.Is2FAEnabled = newState;
+        }
+        else
+        {
+            _isLoading2FA = true;
+            Switch2FA.IsToggled = !newState;
+            _isLoading2FA = false;
+
+            await DisplayAlert("Error", "No se pudo actualizar la configuración de 2FA en Supabase.", "OK");
         }
     }
 
@@ -85,7 +131,6 @@ public partial class SettingsPage : ContentPage
 
         string selected = PickerTheme.SelectedItem as string ?? "Sistema";
 
-        // 1. Aplicar inmediatamente en la app
         Application.Current.UserAppTheme = selected switch
         {
             "Claro" => AppTheme.Light,
@@ -93,10 +138,8 @@ public partial class SettingsPage : ContentPage
             _ => AppTheme.Unspecified
         };
 
-        // 2. Guardar respaldo local inmediato (para el arranque antes de leer Supabase)
         Preferences.Default.Set("UserAppTheme", selected);
 
-        // 3. Guardar en Supabase en el perfil del usuario actual
         var user = _mainViewModel?.CurrentUser;
         if (user != null && _databaseService != null)
         {
@@ -105,7 +148,6 @@ public partial class SettingsPage : ContentPage
         }
     }
 
-    // EVENTO DEL BOTÓN REGRESAR
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
         await Navigation.PopAsync();

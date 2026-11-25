@@ -159,9 +159,9 @@
                             </VerticalStackLayout>
 
                             <Switch Grid.Column="1"
-                                    x:Name="Switch2FA"
-                                    IsToggled="True"
-                                    OnColor="#5EEAD4" />
+                                x:Name="Switch2FA"
+                                Toggled="On2FAToggled"
+                                OnColor="#5EEAD4" />
                         </Grid>
                     </Border>
                 </VerticalStackLayout>

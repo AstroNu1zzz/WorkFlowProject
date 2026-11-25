@@ -1,58 +1,50 @@
 ﻿using System;
-using System.Diagnostics;
-using System.Threading;
+using System.Net.Http;
+using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
-using MailKit.Net.Smtp;
-using MailKit.Security;
-using MimeKit;
 
 namespace Examen2.Services;
 
 public class EmailService
 {
-    public async Task<(bool Success, string ErrorDetail)> Send2FACodeAsync(string toEmail, string code)
-    {
-        if (string.IsNullOrWhiteSpace(toEmail))
-            return (false, "El correo del usuario destino está vacío.");
+    private static readonly HttpClient _httpClient = new() { Timeout = TimeSpan.FromSeconds(15) };
+    private const string FunctionUrl = "https://ebndevmaperaoshfrblu.supabase.co/functions/v1/auth-2fa";
+    private const string PublishableKey = "sb_publishable_JrSXPoMHeeJYEe3jgJQ5ZQ_OGWoE-A1";
 
+    public async Task<(bool Success, string ErrorDetail)> Send2FACodeAsync(string toEmail)
+    {
+        return await PostActionAsync(new { action = "send", email = toEmail });
+    }
+
+    public async Task<(bool Success, string ErrorDetail)> Verify2FACodeAsync(string toEmail, string code)
+    {
+        return await PostActionAsync(new { action = "verify", email = toEmail, code });
+    }
+
+    private async Task<(bool Success, string ErrorDetail)> PostActionAsync(object payload)
+    {
         try
         {
-            var mailTask = Task.Run(async () =>
-            {
-                using var cts = new CancellationTokenSource(15000); // 15 segundos para latencia móvil
-                using var client = new SmtpClient();
-                client.Timeout = 15000;
-                client.ServerCertificateValidationCallback = (s, c, ch, e) => true;
+            using var request = new HttpRequestMessage(HttpMethod.Post, FunctionUrl);
+            request.Headers.Add("apikey", PublishableKey);
+            request.Content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json");
 
-                await client.ConnectAsync("smtp.gmail.com", 465, SecureSocketOptions.SslOnConnect, cts.Token);
-                await client.AuthenticateAsync("soporte.workflowapp@gmail.com", "vjzemngobuvcysrp", cts.Token);
+            using var response = await _httpClient.SendAsync(request);
+            string body = await response.Content.ReadAsStringAsync();
 
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress("WorkFlow", "soporte.workflowapp@gmail.com"));
-                message.To.Add(new MailboxAddress("", toEmail));
-                message.Subject = "Código de Verificación - WorkFlow";
-                message.Body = new TextPart("plain")
-                {
-                    Text = $"Hola,\n\nTu código de verificación para ingresar a WorkFlow es: {code}"
-                };
+            using var doc = JsonDocument.Parse(body);
+            bool success = doc.RootElement.TryGetProperty("success", out var s) && s.GetBoolean();
+            string error = doc.RootElement.TryGetProperty("error", out var e) ? e.GetString() : string.Empty;
 
-                await client.SendAsync(message, cts.Token);
-                await client.DisconnectAsync(true, cts.Token);
-                return (true, string.Empty);
-            });
-
-            var completedTask = await Task.WhenAny(mailTask, Task.Delay(16000));
-            if (completedTask == mailTask)
-            {
-                return await mailTask;
-            }
-
-            return (false, "Tiempo de espera agotado tras 15 segundos.");
+            return (success, error ?? string.Empty);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"[EmailService Exception]: {ex.Message}");
-            return (false, ex.InnerException?.Message ?? ex.Message);
+            return (false, ex.Message);
         }
     }
 }

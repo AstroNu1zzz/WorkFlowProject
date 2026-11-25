@@ -10,7 +10,6 @@ public partial class EditProfilePage : ContentPage
     private readonly DatabaseService _databaseService;
     private readonly EmailService _emailService;
     private readonly MainViewModel _mainViewModel;
-    private bool _isEmailVerified = false;
 
     public EditProfilePage(DatabaseService databaseService, EmailService emailService, MainViewModel mainViewModel)
     {
@@ -52,7 +51,7 @@ public partial class EditProfilePage : ContentPage
     // 1. ACTUALIZAR NOMBRE DE USUARIO
     private async void OnUpdateUsernameClicked(object sender, EventArgs e)
     {
-        string newUsername = TxtUsername.Text?.Trim();
+        string? newUsername = TxtUsername.Text?.Trim();
 
         if (string.IsNullOrWhiteSpace(newUsername) || newUsername.Length < 3 || newUsername.Length > 20)
         {
@@ -66,7 +65,9 @@ public partial class EditProfilePage : ContentPage
             return;
         }
 
-        var user = _mainViewModel.CurrentUser;
+        var user = _mainViewModel?.CurrentUser;
+        if (user == null) return;
+
         user.Username = newUsername;
 
         bool ok = await _databaseService.UpdateUserAsync(user);
@@ -92,9 +93,7 @@ public partial class EditProfilePage : ContentPage
             return;
         }
 
-        string generatedCode = Random.Shared.Next(100000, 999999).ToString();
-
-        var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email, generatedCode);
+        var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email);
         if (!sent)
         {
             await DisplayAlert("Error de Envío", $"No se pudo enviar el correo de verificación: {errorMsg}", "OK");
@@ -105,7 +104,7 @@ public partial class EditProfilePage : ContentPage
 
         await Navigation.PushAsync(new TwoFactorPage(
             user,
-            generatedCode,
+            _emailService,
             _databaseService,
             _mainViewModel,
             onSuccessCallback: async () =>
@@ -130,7 +129,7 @@ public partial class EditProfilePage : ContentPage
     // 3. CAMBIAR CORREO (SOLICITA CONTRASEÑA ACTUAL)
     private async void OnChangeEmailClicked(object sender, EventArgs e)
     {
-        var user = _mainViewModel.CurrentUser;
+        var user = _mainViewModel?.CurrentUser;
         if (user == null) return;
 
         string currentPasswordInput = await DisplayPromptAsync(
@@ -165,7 +164,7 @@ public partial class EditProfilePage : ContentPage
         }
 
         user.Email = newEmail;
-        user.IsEmailVerified = false; // <--- Reiniciar en el modelo antes de guardar
+        user.IsEmailVerified = false;
         bool ok = await _databaseService.UpdateUserAsync(user);
 
         if (ok)
@@ -184,13 +183,10 @@ public partial class EditProfilePage : ContentPage
     // 4. CAMBIAR CONTRASEÑA ENVIANDO CÓDIGO REAL CON EMAILSERVICE
     private async void OnChangePassword2FAClicked(object sender, EventArgs e)
     {
-        var user = _mainViewModel.CurrentUser;
+        var user = _mainViewModel?.CurrentUser;
         if (user == null) return;
 
-        string generatedCode = Random.Shared.Next(100000, 999999).ToString();
-
-        // CORRECCIÓN CS0029: Desestructurar la tupla (bool Success, string ErrorDetail)
-        var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email, generatedCode);
+        var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email);
         if (!sent)
         {
             await DisplayAlert("Error de Envío", $"No se pudo enviar el código 2FA: {errorMsg}", "OK");
@@ -201,7 +197,7 @@ public partial class EditProfilePage : ContentPage
 
         await Navigation.PushAsync(new TwoFactorPage(
             user,
-            generatedCode,
+            _emailService,
             _databaseService,
             _mainViewModel,
             onSuccessCallback: async () =>

@@ -20,8 +20,8 @@ public partial class LoginPage : ContentPage
 
     private async void OnLoginClicked(object sender, EventArgs e)
     {
-        string usernameOrEmail = TxtUsernameOrEmail.Text?.Trim();
-        string password = TxtPassword.Text;
+        string? usernameOrEmail = TxtUsernameOrEmail.Text?.Trim();
+        string? password = TxtPassword.Text;
 
         if (string.IsNullOrEmpty(usernameOrEmail) || string.IsNullOrEmpty(password))
         {
@@ -39,10 +39,7 @@ public partial class LoginPage : ContentPage
 
         if (user.Is2FAEnabled)
         {
-            string verificationCode = Random.Shared.Next(100000, 999999).ToString();
-
-            // CORRECCIÓN CS0029: Desestructurar la tupla (bool Success, string ErrorDetail)
-            var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email, verificationCode);
+            var (sent, errorMsg) = await _emailService.Send2FACodeAsync(user.Email);
             if (!sent)
             {
                 await DisplayAlert("Error de envío", $"No se pudo enviar el código 2FA a tu correo: {errorMsg}", "OK");
@@ -50,7 +47,7 @@ public partial class LoginPage : ContentPage
             }
 
             await DisplayAlert("Autenticación 2FA", $"Hemos enviado un código de acceso de 6 dígitos a tu correo electrónico ({user.Email}).", "OK");
-            await Navigation.PushAsync(new TwoFactorPage(user, verificationCode, _databaseService, _mainViewModel));
+            await Navigation.PushAsync(new TwoFactorPage(user, _emailService, _databaseService, _mainViewModel));
         }
         else
         {
@@ -58,8 +55,11 @@ public partial class LoginPage : ContentPage
             Preferences.Default.Set("CurrentUserId", user.Id);
             Preferences.Default.Set("Last2FAVerifiedAt", DateTime.UtcNow);
 
-            _mainViewModel.CurrentUser = user;
-            Application.Current.MainPage = new NavigationPage(new MainPage(_databaseService, _mainViewModel));
+            _mainViewModel.SetCurrentUser(user);
+            if (Application.Current != null)
+            {
+                Application.Current.MainPage = new NavigationPage(new MainPage(_databaseService, _mainViewModel));
+            }
         }
     }
 

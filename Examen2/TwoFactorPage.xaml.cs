@@ -1,4 +1,5 @@
 using Examen2.Data;
+using Examen2.Services;
 using Examen2.ViewModels;
 using User = Examen2.Data.User;
 
@@ -7,21 +8,22 @@ namespace Examen2;
 public partial class TwoFactorPage : ContentPage
 {
     private readonly User _user;
-    private readonly string _expectedCode;
+    private readonly EmailService _emailService;
     private readonly DatabaseService _databaseService;
     private readonly MainViewModel _mainViewModel;
-    private readonly Func<Task> _onSuccessCallback;
+    private readonly Func<Task>? _onSuccessCallback;
+    private bool _isVerifying;
 
     public TwoFactorPage(
         User user,
-        string verificationCode,
+        EmailService emailService,
         DatabaseService databaseService,
         MainViewModel mainViewModel,
-        Func<Task> onSuccessCallback = null)
+        Func<Task>? onSuccessCallback = null)
     {
         InitializeComponent();
         _user = user;
-        _expectedCode = verificationCode;
+        _emailService = emailService;
         _databaseService = databaseService;
         _mainViewModel = mainViewModel;
         _onSuccessCallback = onSuccessCallback;
@@ -29,29 +31,45 @@ public partial class TwoFactorPage : ContentPage
 
     private async void OnVerifyClicked(object sender, EventArgs e)
     {
-        if (TxtCode.Text?.Trim() == _expectedCode)
+        if (_isVerifying) return;
+
+        string? enteredCode = TxtCode.Text?.Trim();
+        if (string.IsNullOrWhiteSpace(enteredCode))
         {
+            await DisplayAlert("Campo vacío", "Ingresa el código de 6 dígitos enviado a tu correo.", "OK");
+            return;
+        }
+
+        _isVerifying = true;
+        try
+        {
+            var (isValid, errorMsg) = await _emailService.Verify2FACodeAsync(_user.Email, enteredCode);
+
+            if (!isValid)
+            {
+                await DisplayAlert("Error", string.IsNullOrWhiteSpace(errorMsg) ? "Código de verificación incorrecto." : errorMsg, "OK");
+                return;
+            }
+
             Preferences.Default.Set("IsLoggedIn", true);
             Preferences.Default.Set("CurrentUserId", _user.Id);
             Preferences.Default.Set("Last2FAVerifiedAt", DateTime.UtcNow);
 
-            _mainViewModel.CurrentUser = _user;
+            _mainViewModel.SetCurrentUser(_user);
 
-            // Si proviene de un flujo específico (ej. Cambiar contraseña / Verificar correo)
             if (_onSuccessCallback != null)
             {
-                await Navigation.PopAsync(); // Cierra TwoFactorPage
-                await _onSuccessCallback.Invoke(); // Ejecuta la acción pendiente
+                await Navigation.PopAsync();
+                await _onSuccessCallback.Invoke();
             }
-            else
+            else if (Application.Current != null)
             {
-                // Flujo normal de Inicio de Sesión
-                await Navigation.PushAsync(new MainPage(_databaseService, _mainViewModel));
+                Application.Current.MainPage = new NavigationPage(new MainPage(_databaseService, _mainViewModel));
             }
         }
-        else
+        finally
         {
-            await DisplayAlert("Error", "Código de verificación incorrecto.", "OK");
+            _isVerifying = false;
         }
     }
 

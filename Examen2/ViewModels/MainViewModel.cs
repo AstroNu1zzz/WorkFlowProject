@@ -123,6 +123,7 @@ namespace Examen2.ViewModels
         // --- CONTROL DE MENÚS (PERFIL Y MENÚ LATERAL) ---
         private bool _isProfileMenuVisible;
         public ObservableCollection<ActivityItemViewModel> GlobalRecentActivities { get; set; } = new();
+        public ObservableCollection<ActivityItemViewModel> PendingTasks { get; set; } = new();
         public bool IsProfileMenuVisible
         {
             get => _isProfileMenuVisible;
@@ -539,6 +540,8 @@ namespace Examen2.ViewModels
 #endif
             }
         }
+
+
 
         private void OnPauseTimer()
         {
@@ -1017,8 +1020,11 @@ namespace Examen2.ViewModels
             var completedTaskIds = await _databaseService.GetCompletedTaskIdsAsync(CurrentUser.Id);
 
             GlobalRecentActivities.Clear();
+            PendingTasks.Clear();
             _tasksByDate.Clear();
 
+            DateTime nowLocal = DateTime.Now;
+            DateTime oneDayAgo = nowLocal.AddDays(-1);
             int colorIndex = 0;
             string[] vibrantColors = { "#5EEAD4", "#5C93F9", "#86EFAC" };
 
@@ -1028,35 +1034,43 @@ namespace Examen2.ViewModels
                 var parentCourse = courses.FirstOrDefault(c => c.Id == a.CourseId);
                 string courseName = parentCourse != null ? parentCourse.CourseName : "Clase";
 
+                DateTime? dueLocal = a.DueDate.HasValue
+                    ? (a.DueDate.Value.Kind == DateTimeKind.Utc ? a.DueDate.Value.ToLocalTime() : a.DueDate.Value)
+                    : null;
+
+                DateTime createdLocal = a.CreatedAt.Kind == DateTimeKind.Utc
+                    ? a.CreatedAt.ToLocalTime()
+                    : a.CreatedAt;
+
                 // Evaluar estado semáforo para el calendario
-                if (a.ItemType == "Tarea" && a.DueDate.HasValue)
+                if (a.IsTask && dueLocal.HasValue)
                 {
                     string statusColor;
                     string statusLabel;
 
                     if (isTeacherInThisCourse)
                     {
-                        bool isClosed = a.DueDate.Value < DateTime.Now;
+                        bool isClosed = dueLocal.Value < nowLocal;
                         statusColor = isClosed ? "#4ADE80" : "#FACC15";
-                        statusLabel = isClosed ? $"Cerrada • {a.DueDate.Value:HH:mm}" : $"Activa • {a.DueDate.Value:HH:mm}";
+                        statusLabel = isClosed ? $"Cerrada • {dueLocal.Value:HH:mm}" : $"Activa • {dueLocal.Value:HH:mm}";
                     }
                     else if (completedTaskIds.Contains(a.Id))
                     {
-                        statusColor = "#4ADE80"; // Verde: entregada o calificada
-                        statusLabel = $"Entregada • {a.DueDate.Value:HH:mm}";
+                        statusColor = "#4ADE80";
+                        statusLabel = $"Entregada • {dueLocal.Value:HH:mm}";
                     }
-                    else if (a.DueDate.Value < DateTime.Now)
+                    else if (dueLocal.Value < nowLocal)
                     {
-                        statusColor = "#F87171"; // Rojo: vencida sin entregar
-                        statusLabel = $"Vencida • {a.DueDate.Value:HH:mm}";
+                        statusColor = "#F87171";
+                        statusLabel = $"Vencida • {dueLocal.Value:HH:mm}";
                     }
                     else
                     {
-                        statusColor = "#FACC15"; // Amarillo: pendiente de entrega
-                        statusLabel = $"Pendiente • {a.DueDate.Value:HH:mm}";
+                        statusColor = "#FACC15";
+                        statusLabel = $"Pendiente • {dueLocal.Value:HH:mm}";
                     }
 
-                    var dateKey = a.DueDate.Value.Date;
+                    var dateKey = dueLocal.Value.Date;
                     if (!_tasksByDate.TryGetValue(dateKey, out var dayList))
                     {
                         dayList = new List<ActivityItemViewModel>();
@@ -1076,41 +1090,57 @@ namespace Examen2.ViewModels
                     });
                 }
 
-                if (isTeacherInThisCourse && a.ItemType == "Tarea")
+                // Tareas: se muestran durante TODA su vigencia (hasta que venza dueLocal)
+                if (a.IsTask)
                 {
-                    continue;
+                    if (isTeacherInThisCourse)
+                        continue;
+
+                    if (dueLocal.HasValue && dueLocal.Value < nowLocal)
+                        continue;
+
+                    string taskColor = vibrantColors[colorIndex++ % vibrantColors.Length];
+                    var taskVm = new ActivityItemViewModel
+                    {
+                        OriginalItem = a,
+                        DisplayTitle = $"{a.ItemType}: {a.Title}",
+                        Subtitle = $"{courseName} • Publicado el {createdLocal:dd MMM}",
+                        GradientStartColor = taskColor,
+                        StatusColor = taskColor,
+                        IconString = "📋",
+                        HasDueDate = dueLocal.HasValue,
+                        DueDateString = dueLocal.HasValue ? $"Entrega: {dueLocal.Value:dd/MM/yyyy HH:mm}" : ""
+                    };
+
+                    PendingTasks.Add(taskVm);
+                    GlobalRecentActivities.Add(taskVm);
                 }
-
-                if (a.ItemType == "Tarea" && a.DueDate.HasValue && a.DueDate.Value < DateTime.Now)
+                // Materiales y anuncios: solo visibles 24 horas en el tablón de novedades
+                else
                 {
-                    continue;
+                    if (createdLocal < oneDayAgo)
+                        continue;
+
+                    string color = string.Equals(a.ItemType?.Trim(), "Material", StringComparison.OrdinalIgnoreCase)
+                        ? "#5EEAD4"
+                        : "#86EFAC";
+
+                    string icon = string.Equals(a.ItemType?.Trim(), "Material", StringComparison.OrdinalIgnoreCase)
+                        ? "📖"
+                        : "📢";
+
+                    GlobalRecentActivities.Add(new ActivityItemViewModel
+                    {
+                        OriginalItem = a,
+                        DisplayTitle = $"{a.ItemType}: {a.Title}",
+                        Subtitle = $"{courseName} • Publicado el {createdLocal:dd MMM}",
+                        GradientStartColor = color,
+                        StatusColor = color,
+                        IconString = icon,
+                        HasDueDate = false,
+                        DueDateString = ""
+                    });
                 }
-
-                string gradient = a.ItemType switch
-                {
-                    "Tarea" => vibrantColors[colorIndex++ % vibrantColors.Length],
-                    "Material" => "#5EEAD4",
-                    _ => "#86EFAC"
-                };
-
-                string icon = a.ItemType switch
-                {
-                    "Tarea" => "📋",
-                    "Material" => "📖",
-                    _ => "📢"
-                };
-
-                GlobalRecentActivities.Add(new ActivityItemViewModel
-                {
-                    OriginalItem = a,
-                    DisplayTitle = $"{a.ItemType}: {a.Title}",
-                    Subtitle = $"{courseName} • Publicado el {a.CreatedAt:dd MMM}",
-                    GradientStartColor = gradient,
-                    StatusColor = gradient,
-                    IconString = icon,
-                    HasDueDate = a.DueDate.HasValue,
-                    DueDateString = a.DueDate.HasValue ? $"Entrega: {a.DueDate.Value:dd/MM/yyyy HH:mm}" : ""
-                });
             }
 
             LoadCalendarDays();

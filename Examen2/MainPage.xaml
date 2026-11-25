@@ -253,7 +253,7 @@
                            FontSize="13"
                            TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
 
-                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding GlobalRecentActivities}" Spacing="12">
+                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding PendingTasks}" Spacing="12">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate>
                                 <Border StrokeThickness="1"

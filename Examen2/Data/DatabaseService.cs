@@ -89,6 +89,37 @@ namespace Examen2.Data
             }
         }
 
+        // --- SUBIDA DE PORTADA DE CLASE ---
+        public async Task<(string Url, string ErrorMessage)> UploadCourseBannerAsync(Stream stream, string originalFileName)
+        {
+            await InitAsync();
+
+            if (stream == null)
+                return (null, "No se pudo abrir la imagen seleccionada.");
+
+            try
+            {
+                var storage = _client.Storage.From("Workflow-files");
+                string fileName = $"banners/{Guid.NewGuid()}_{originalFileName}";
+
+                using (var memoryStream = new MemoryStream())
+                {
+                    await stream.CopyToAsync(memoryStream);
+                    byte[] fileBytes = memoryStream.ToArray();
+
+                    await storage.Upload(fileBytes, fileName);
+                }
+
+                string publicUrl = storage.GetPublicUrl(fileName);
+                return (publicUrl, null);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al subir portada: {ex.Message}");
+                return (null, ex.Message);
+            }
+        }
+
         // --- UNIRSE A UNA CLASE POR CÓDIGO ---
         public async Task<(bool Success, string Message)> JoinCourseWithCodeAsync(string courseCode, int userId)
         {
@@ -391,6 +422,38 @@ namespace Examen2.Data
             return false;
         }
 
+        public async Task<bool> UpdateCourseAsync(Course course)
+        {
+            await InitAsync();
+            try
+            {
+                var response = await _client.From<Course>().Update(course);
+                return response.Models.Count > 0;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al actualizar clase: {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> RemoveMemberFromCourseAsync(int courseId, int userId)
+        {
+            await InitAsync();
+            try
+            {
+                await _client.From<CourseMember>()
+                             .Where(m => m.CourseId == courseId && m.UserId == userId)
+                             .Delete();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al sacar miembro de la clase: {ex.Message}");
+                return false;
+            }
+        }
+
         public async Task<(bool Success, string Message)> AddTeacherToCourseAsync(int courseId, string teacherEmailOrUsername)
         {
             await InitAsync();
@@ -635,7 +698,6 @@ namespace Examen2.Data
         {
             await InitAsync();
 
-            // 1. Verificar fecha límite de la tarea
             var itemResponse = await _client.From<ClassContentItem>()
                                             .Where(i => i.Id == submission.ContentItemId)
                                             .Get();
@@ -646,7 +708,6 @@ namespace Examen2.Data
                 return (false, "El plazo de entrega ha vencido. Ya no se permiten envíos.");
             }
 
-            // 2. Guardar o actualizar entrega si está en tiempo
             var existing = await GetTaskSubmissionAsync(submission.ContentItemId, submission.UserId);
 
             if (existing != null)

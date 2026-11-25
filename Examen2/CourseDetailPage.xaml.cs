@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Runtime.CompilerServices;
 using Examen2.Data;
 using Examen2.ViewModels;
 
@@ -76,9 +78,19 @@ public class FeedPostViewModel
 }
 
 // 3. PÁGINA PRINCIPAL DE DETALLE DEL CURSO
-public partial class CourseDetailPage : ContentPage
+public partial class CourseDetailPage : ContentPage, INotifyPropertyChanged
 {
-    public Course Course { get; set; }
+    private Course _course;
+    public Course Course
+    {
+        get => _course;
+        set
+        {
+            _course = value;
+            OnPropertyChanged();
+        }
+    }
+
     public ObservableCollection<FeedPostViewModel> FeedPosts { get; set; } = new();
     public ObservableCollection<FeedPostViewModel> AssignmentPosts { get; set; } = new();
 
@@ -99,6 +111,7 @@ public partial class CourseDetailPage : ContentPage
     {
         base.OnAppearing();
         EnsureServices();
+        OnPropertyChanged(nameof(Course));
         await LoadCourseContentAsync();
     }
 
@@ -128,15 +141,17 @@ public partial class CourseDetailPage : ContentPage
         if (_mainViewModel?.CurrentUser != null)
         {
             string role = await _databaseService.GetUserRoleInCourseAsync(Course.Id, _mainViewModel.CurrentUser.Id);
-            _isTeacher = (role == "Teacher");
+            _isTeacher = string.Equals(role, "Teacher", StringComparison.OrdinalIgnoreCase);
         }
         else
         {
             _isTeacher = false;
         }
 
-        // 2. Ajustar visibilidad de botones y herramientas según el rol
-        if (FindByName("FabAdd") is VisualElement fabAdd) fabAdd.IsVisible = _isTeacher;
+        // 2. Ajustar visibilidad de configuración, código de clase y botones según el rol
+        if (FindByName("BtnCourseSettings") is VisualElement btnCourseSettings) btnCourseSettings.IsVisible = _isTeacher;
+        if (FindByName("LayoutCourseCode") is VisualElement layoutCourseCode) layoutCourseCode.IsVisible = _isTeacher;
+        if (FindByName("FabAdd") is VisualElement fabAdd) fabAdd.IsVisible = _isTeacher && ViewNovedades.IsVisible;
         if (FindByName("BtnAddTeacher") is VisualElement btnAddTeacher) btnAddTeacher.IsVisible = _isTeacher;
         if (FindByName("BorderCreatePost") is VisualElement borderCreatePost) borderCreatePost.IsVisible = _isTeacher;
         if (FindByName("BtnManageUnits") is VisualElement btnManageUnits) btnManageUnits.IsVisible = _isTeacher;
@@ -178,7 +193,6 @@ public partial class CourseDetailPage : ContentPage
             }
         }
 
-        // Elementos sin unidad asignada o publicados fuera del rango de fechas
         var unassignedItems = items.Where(i => !i.UnitId.HasValue && !units.Any(u => i.CreatedAt.Date >= u.StartDate.Date && i.CreatedAt.Date <= u.EndDate.Date))
                                    .Select(i => new FeedPostViewModel(i, accentHex))
                                    .ToList();
@@ -229,6 +243,11 @@ public partial class CourseDetailPage : ContentPage
         ViewTrabajos.IsVisible = (activeView == ViewTrabajos);
         ViewPersonas.IsVisible = (activeView == ViewPersonas);
 
+        if (FabAdd != null)
+        {
+            FabAdd.IsVisible = _isTeacher && (activeView == ViewNovedades);
+        }
+
         Color inactiveColor = Color.FromArgb("#64748B");
         Color activeColor = Color.FromArgb("#5EEAD4");
 
@@ -247,6 +266,15 @@ public partial class CourseDetailPage : ContentPage
     private async void OnBackButtonClicked(object sender, EventArgs e)
     {
         await Navigation.PopAsync();
+    }
+
+    private async void OnCourseSettingsClicked(object sender, EventArgs e)
+    {
+        EnsureServices();
+
+        if (!_isTeacher || Course == null) return;
+
+        await Navigation.PushAsync(new CourseSettingsPage(Course, _databaseService, _mainViewModel));
     }
 
     private async void OnManageUnitsClicked(object sender, EventArgs e)
@@ -313,13 +341,10 @@ public partial class CourseDetailPage : ContentPage
         await DisplayAlert("Videollamada", "Iniciando sesión de videollamada para la clase...", "OK");
     }
 
-    private async void OnCourseInfoClicked(object sender, EventArgs e)
-    {
-        await DisplayAlert("Información del Curso", $"{Course.CourseName}\nCódigo de clase: {Course.CourseCode}\nProfesor: {Course.DisplayTeacherName}", "OK");
-    }
-
     private async void OnCopyCourseCodeTapped(object sender, EventArgs e)
     {
+        if (!_isTeacher) return;
+
         if (!string.IsNullOrWhiteSpace(Course?.CourseCode))
         {
             await Clipboard.Default.SetTextAsync(Course.CourseCode);
@@ -433,5 +458,11 @@ public partial class CourseDetailPage : ContentPage
             await Clipboard.Default.SetTextAsync($"workflow://course/{Course.Id}/item/{vm.SourceItem.Id}");
             await DisplayAlert("Éxito", "Enlace copiado al portapapeles.", "OK");
         }
+    }
+
+    public new event PropertyChangedEventHandler PropertyChanged;
+    protected new void OnPropertyChanged([CallerMemberName] string propertyName = null)
+    {
+        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 }

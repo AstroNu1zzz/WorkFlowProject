@@ -24,61 +24,62 @@
 
         <!-- BARRA SUPERIOR PERSONALIZADA -->
         <Border Grid.Row="0"
-        StrokeThickness="0"
-        Padding="20,12"
-        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                StrokeThickness="0"
+                Padding="20,12"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
             <Border.Shadow>
                 <Shadow Brush="#000000" Opacity="0.06" Offset="0,2" Radius="6" />
             </Border.Shadow>
 
             <Grid ColumnDefinitions="Auto, *, Auto, Auto" ColumnSpacing="14" VerticalOptions="Center">
                 <Image Grid.Column="0"
-               Source="workflow_mark.png"
-               WidthRequest="30"
-               HeightRequest="30"
-               Aspect="AspectFit"
-               BackgroundColor="Transparent"
-               VerticalOptions="Center" />
+                       Source="workflow_mark.png"
+                       WidthRequest="30"
+                       HeightRequest="30"
+                       Aspect="AspectFit"
+                       BackgroundColor="Transparent"
+                       VerticalOptions="Center" />
 
                 <HorizontalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="4">
                     <Label Text="Work"
-                   FontSize="22"
-                   FontAttributes="Bold"
-                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
                     <Label Text="Flow"
-                   FontSize="22"
-                   FontAttributes="Bold"
-                   TextColor="#5EEAD4" />
+                           FontSize="22"
+                           FontAttributes="Bold"
+                           TextColor="#5EEAD4" />
                 </HorizontalStackLayout>
 
                 <Button Grid.Column="2"
-                Text="＋"
-                FontSize="20"
-                TextColor="#5EEAD4"
-                BackgroundColor="Transparent"
-                Padding="0"
-                WidthRequest="32"
-                HeightRequest="32"
-                Command="{Binding AddCourseCommand}" />
+                        Text="＋"
+                        FontSize="20"
+                        TextColor="#5EEAD4"
+                        BackgroundColor="Transparent"
+                        Padding="0"
+                        WidthRequest="32"
+                        HeightRequest="32"
+                        IsVisible="{Binding IsClasesVisible}"
+                        Command="{Binding AddCourseCommand}" />
 
                 <Border Grid.Column="3"
-                WidthRequest="38"
-                HeightRequest="38"
-                StrokeShape="RoundRectangle 19"
-                StrokeThickness="1.5"
-                Stroke="#86EFAC">
+                        WidthRequest="38"
+                        HeightRequest="38"
+                        StrokeShape="RoundRectangle 19"
+                        StrokeThickness="1.5"
+                        Stroke="#86EFAC">
                     <Grid>
                         <Button Text="{Binding UserInitial}"
-                        Command="{Binding ToggleProfileMenuCommand}"
-                        BackgroundColor="#1E2B3C"
-                        TextColor="White"
-                        FontAttributes="Bold"
-                        FontSize="14"
-                        Padding="0" />
+                                Command="{Binding ToggleProfileMenuCommand}"
+                                BackgroundColor="#1E2B3C"
+                                TextColor="White"
+                                FontAttributes="Bold"
+                                FontSize="14"
+                                Padding="0" />
 
                         <Image Source="{Binding ProfileImageSource}"
-                       IsVisible="{Binding HasProfilePicture}"
-                       Aspect="AspectFill">
+                               IsVisible="{Binding HasProfilePicture}"
+                               Aspect="AspectFill">
                             <Image.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding ToggleProfileMenuCommand}" />
                             </Image.GestureRecognizers>
@@ -342,9 +343,9 @@
 
             <!-- VISTA 4: CALENDARIO DE ENTREGAS DINÁMICO -->
             <Grid IsVisible="{Binding IsCalendarioVisible}"
-      RowDefinitions="Auto, Auto, *"
-      RowSpacing="10"
-      Padding="16,16,16,0">
+                  RowDefinitions="Auto, Auto, *"
+                  RowSpacing="10"
+                  Padding="16,16,16,0">
 
                 <Grid Grid.Row="0" ColumnDefinitions="Auto, *, Auto" VerticalOptions="Center">
                     <Button Grid.Column="0" Text="◀" Command="{Binding PreviousMonthCommand}" BackgroundColor="Transparent" TextColor="#5EEAD4" FontSize="16" FontAttributes="Bold" WidthRequest="44" HeightRequest="44" />
@@ -366,9 +367,9 @@
                 </Grid>
 
                 <CollectionView Grid.Row="2"
-                    ItemsSource="{Binding CalendarDays}"
-                    SelectionMode="None"
-                    VerticalScrollBarVisibility="Never">
+                                ItemsSource="{Binding CalendarDays}"
+                                SelectionMode="None"
+                                VerticalScrollBarVisibility="Never">
                     <CollectionView.ItemsLayout>
                         <GridItemsLayout Orientation="Vertical" Span="7" VerticalItemSpacing="8" HorizontalItemSpacing="6" />
                     </CollectionView.ItemsLayout>
@@ -378,35 +379,35 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate>
                             <Border HeightRequest="95"
-                        StrokeShape="RoundRectangle 10"
-                        StrokeThickness="{Binding BorderThickness}"
-                        Stroke="{Binding BorderColor}"
-                        IsEnabled="{Binding HasTask}"
-                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                                    StrokeShape="RoundRectangle 10"
+                                    StrokeThickness="{Binding BorderThickness}"
+                                    Stroke="{Binding BorderColor}"
+                                    IsEnabled="{Binding HasTask}"
+                                    BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
-                            Command="{Binding Source={x:Reference mainPage}, Path=BindingContext.OpenCalendarDayCommand}"
-                            CommandParameter="{Binding .}" />
+                                        Command="{Binding Source={x:Reference mainPage}, Path=BindingContext.OpenCalendarDayCommand}"
+                                        CommandParameter="{Binding .}" />
                                 </Border.GestureRecognizers>
 
                                 <Grid RowDefinitions="*, Auto" Padding="8">
                                     <Label Grid.Row="0"
-                               Text="{Binding DayNumberText}"
-                               FontSize="12"
-                               FontAttributes="{Binding DayFontAttributes}"
-                               TextColor="{Binding DayTextColor}" />
+                                           Text="{Binding DayNumberText}"
+                                           FontSize="12"
+                                           FontAttributes="{Binding DayFontAttributes}"
+                                           TextColor="{Binding DayTextColor}" />
 
                                     <VerticalStackLayout Grid.Row="1"
-                                             BindableLayout.ItemsSource="{Binding DayTasks}"
-                                             Spacing="3"
-                                             VerticalOptions="End"
-                                             IsVisible="{Binding HasTask}"
-                                             Margin="0,0,0,2">
+                                                         BindableLayout.ItemsSource="{Binding DayTasks}"
+                                                         Spacing="3"
+                                                         VerticalOptions="End"
+                                                         IsVisible="{Binding HasTask}"
+                                                         Margin="0,0,0,2">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate>
                                                 <BoxView HeightRequest="3.5"
-                                             CornerRadius="1.75"
-                                             Color="{Binding StatusColor}" />
+                                                         CornerRadius="1.75"
+                                                         Color="{Binding StatusColor}" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
                                     </VerticalStackLayout>
@@ -431,8 +432,17 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- BOTÓN FLOTANTE (FAB) -->
-            <Border HorizontalOptions="End" VerticalOptions="End" Margin="0,0,22,24" WidthRequest="60" HeightRequest="60" StrokeShape="RoundRectangle 30" StrokeThickness="0" Background="{StaticResource WorkflowBrandBrush}" Shadow="{StaticResource FabShadow}">
+            <!-- BOTÓN FLOTANTE (FAB - SOLO EN CLASES / NOVEDADES) -->
+            <Border HorizontalOptions="End"
+                    VerticalOptions="End"
+                    Margin="0,0,22,24"
+                    WidthRequest="60"
+                    HeightRequest="60"
+                    StrokeShape="RoundRectangle 30"
+                    StrokeThickness="0"
+                    IsVisible="{Binding IsClasesVisible}"
+                    Background="{StaticResource WorkflowBrandBrush}"
+                    Shadow="{StaticResource FabShadow}">
                 <Grid>
                     <Label Text="+" FontSize="34" FontAttributes="Bold" TextColor="#0F172A" HorizontalOptions="Center" VerticalOptions="Center" Margin="0,-2,0,0" />
                     <Button BackgroundColor="Transparent" Command="{Binding AddCourseCommand}" />

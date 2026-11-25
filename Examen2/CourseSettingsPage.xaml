@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="Examen2.CourseSettingsPage"
+             Title="Configuración de la Clase"
+             NavigationPage.HasNavigationBar="False"
+             BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
+
+    <Grid RowDefinitions="Auto, *">
+
+        <!-- BARRA SUPERIOR -->
+        <Border Grid.Row="0"
+                Padding="16,12"
+                StrokeThickness="0"
+                BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+            <Border.Shadow>
+                <Shadow Brush="#000000" Opacity="0.06" Offset="0,2" Radius="6" />
+            </Border.Shadow>
+
+            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="12" VerticalOptions="Center">
+                <ImageButton Grid.Column="0"
+                             Source="icon_arrow_back.png"
+                             WidthRequest="24"
+                             HeightRequest="24"
+                             BackgroundColor="Transparent"
+                             Clicked="OnBackButtonClicked" />
+
+                <Label Grid.Column="1"
+                       Text="Configuración de la Clase"
+                       FontSize="18"
+                       FontAttributes="Bold"
+                       VerticalOptions="Center"
+                       TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+            </Grid>
+        </Border>
+
+        <!-- CONTENIDO PRINCIPAL -->
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout Spacing="20" Padding="20,16,20,40" MaximumWidthRequest="650" HorizontalOptions="Fill">
+
+                <!-- SECCIÓN 1: IMAGEN DE LA CLASE -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="16"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Imagen de Portada"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+
+                        <Border HeightRequest="150"
+                                StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                                StrokeShape="RoundRectangle 14">
+                            <Grid>
+                                <Image x:Name="ImgBannerPreview"
+                                       Source="{Binding Course.BannerImagePath}"
+                                       Aspect="AspectFill"
+                                       HorizontalOptions="Fill"
+                                       VerticalOptions="Fill" />
+
+                                <Border StrokeThickness="0">
+                                    <Border.Background>
+                                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                                            <GradientStop Color="#20000000" Offset="0.0" />
+                                            <GradientStop Color="#AA0F172A" Offset="1.0" />
+                                        </LinearGradientBrush>
+                                    </Border.Background>
+                                </Border>
+                            </Grid>
+                        </Border>
+
+                        <Button Text="🖼️  Cambiar imagen de la clase"
+                                Clicked="OnChangeBannerClicked"
+                                BackgroundColor="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                                TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                HeightRequest="44" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- SECCIÓN 2: NOMBRE DE LA CLASE -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="16"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                    <VerticalStackLayout Spacing="12">
+                        <Label Text="Nombre de la Clase"
+                               FontSize="16"
+                               FontAttributes="Bold"
+                               TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+
+                        <Border StrokeThickness="1"
+                                Stroke="{AppThemeBinding Light=#CBD5E1, Dark=#334155}"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="12,4"
+                                BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
+                            <Entry x:Name="EntryCourseName"
+                                   Text="{Binding Course.CourseName}"
+                                   Placeholder="Nombre de la clase"
+                                   FontSize="15"
+                                   MaxLength="60"
+                                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}"
+                                   PlaceholderColor="#64748B" />
+                        </Border>
+
+                        <Button Text="Guardar nombre"
+                                Clicked="OnSaveNameClicked"
+                                BackgroundColor="#5EEAD4"
+                                TextColor="#0F172A"
+                                FontAttributes="Bold"
+                                CornerRadius="10"
+                                HeightRequest="44" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- SECCIÓN 3: PERSONAS EN LA CLASE -->
+                <Border StrokeThickness="1"
+                        Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                        StrokeShape="RoundRectangle 16"
+                        Padding="16"
+                        BackgroundColor="{AppThemeBinding Light=White, Dark=#1E232B}">
+                    <VerticalStackLayout Spacing="12">
+                        <VerticalStackLayout Spacing="2">
+                            <Label Text="Personas en la Clase"
+                                   FontSize="16"
+                                   FontAttributes="Bold"
+                                   TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                            <Label Text="Administra los participantes inscritos o retíralos del curso."
+                                   FontSize="12"
+                                   TextColor="{AppThemeBinding Light=#64748B, Dark=#94A3B8}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding CourseMembers}" Spacing="10">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Padding="12,10"
+                                            StrokeThickness="1"
+                                            Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
+                                            StrokeShape="RoundRectangle 12"
+                                            BackgroundColor="{AppThemeBinding Light=#F8FAFC, Dark=#12161A}">
+                                        <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="12" VerticalOptions="Center">
+                                            <Label Grid.Column="0"
+                                                   Text="{Binding RoleIcon}"
+                                                   FontSize="20"
+                                                   VerticalOptions="Center" />
+
+                                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
+                                                <Label Text="{Binding Username}"
+                                                       FontSize="14"
+                                                       FontAttributes="Bold"
+                                                       TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" />
+                                                <Label Text="{Binding Email}"
+                                                       FontSize="11"
+                                                       TextColor="#64748B" />
+                                                <Label Text="{Binding RoleLabel}"
+                                                       FontSize="11"
+                                                       FontAttributes="Bold"
+                                                       TextColor="#5EEAD4" />
+                                            </VerticalStackLayout>
+
+                                            <Button Grid.Column="2"
+                                                    Text="Sacar"
+                                                    IsVisible="{Binding CanRemove}"
+                                                    Clicked="OnRemoveMemberClicked"
+                                                    BackgroundColor="{AppThemeBinding Light=#FEE2E2, Dark=#382020}"
+                                                    TextColor="#EF4444"
+                                                    FontSize="12"
+                                                    FontAttributes="Bold"
+                                                    CornerRadius="8"
+                                                    HeightRequest="34"
+                                                    Padding="12,0"
+                                                    VerticalOptions="Center" />
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+            </VerticalStackLayout>
+        </ScrollView>
+
+    </Grid>
+</ContentPage>

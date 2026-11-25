@@ -51,12 +51,15 @@
                              BackgroundColor="Transparent"
                              Clicked="OnVideoCallClicked" />
 
-                <ImageButton Grid.Column="3"
+                <!-- BOTÓN CONFIGURACIÓN DE LA CLASE (SOLO PROFESOR) -->
+                <ImageButton x:Name="BtnCourseSettings"
+                             Grid.Column="3"
                              Source="icon_info.png"
                              WidthRequest="22"
                              HeightRequest="22"
+                             IsVisible="False"
                              BackgroundColor="Transparent"
-                             Clicked="OnCourseInfoClicked" />
+                             Clicked="OnCourseSettingsClicked" />
             </Grid>
         </Border>
 
@@ -69,15 +72,15 @@
 
                     <!-- BANNER / PORTADA DEL CURSO -->
                     <Border HeightRequest="140"
-                        StrokeThickness="0"
-                        StrokeShape="RoundRectangle 16"
-                        Margin="0,0,0,16">
+                            StrokeThickness="0"
+                            StrokeShape="RoundRectangle 16"
+                            Margin="0,0,0,16">
                         <Grid>
                             <!-- Imagen de portada -->
                             <Image Source="{Binding Course.BannerImagePath}"
-                               Aspect="AspectFill"
-                               HorizontalOptions="Fill"
-                               VerticalOptions="Fill" />
+                                   Aspect="AspectFill"
+                                   HorizontalOptions="Fill"
+                                   VerticalOptions="Fill" />
 
                             <!-- Sombra / Gradiente superior -->
                             <Border StrokeThickness="0">
@@ -92,28 +95,28 @@
                                 <Grid Padding="20" VerticalOptions="End">
                                     <VerticalStackLayout Spacing="2">
 
-                                        <!-- ENLACE AL NOMBRE DE LA CLASE -->
                                         <Label Text="{Binding Course.CourseName}"
-                                   FontSize="22"
-                                   FontAttributes="Bold"
-                                   TextColor="White" />
+                                               FontSize="22"
+                                               FontAttributes="Bold"
+                                               TextColor="White" />
 
-                                        <!-- ENLACE AL NOMBRE DEL PROFESOR -->
                                         <Label Text="{Binding Course.DisplayTeacherName, StringFormat='Prof. {0}'}"
-                                   FontSize="13"
-                                   TextColor="#5EEAD4" />
+                                               FontSize="13"
+                                               TextColor="#5EEAD4" />
 
-                                        <!-- CÓDIGO DE UNIÓN A LA CLASE -->
-                                        <HorizontalStackLayout Spacing="6" Margin="0,4,0,0">
+                                        <!-- CÓDIGO DE UNIÓN A LA CLASE (SOLO PROFESOR) -->
+                                        <HorizontalStackLayout x:Name="LayoutCourseCode"
+                                                               IsVisible="False"
+                                                               Spacing="6"
+                                                               Margin="0,4,0,0">
                                             <HorizontalStackLayout.GestureRecognizers>
                                                 <TapGestureRecognizer Tapped="OnCopyCourseCodeTapped" />
                                             </HorizontalStackLayout.GestureRecognizers>
 
                                             <Label Text="Código de clase:"
-                                               FontSize="12"
-                                               TextColor="#E2E8F0" />
+                                                   FontSize="12"
+                                                   TextColor="#E2E8F0" />
 
-                                            <!-- ENLACE AL CÓDIGO -->
                                             <Label Text="{Binding Course.CourseCode, TargetNullValue='------'}"
                                                    FontSize="12"
                                                    FontAttributes="Bold"
@@ -127,8 +130,10 @@
                         </Grid>
                     </Border>
 
-                    <!-- Caja Anunciar -->
-                    <Border StrokeThickness="1"
+                    <!-- Caja Anunciar (Solo Profesor) -->
+                    <Border x:Name="BorderCreatePost"
+                            IsVisible="False"
+                            StrokeThickness="1"
                             Stroke="{AppThemeBinding Light=#E2E8F0, Dark=#2D3748}"
                             StrokeShape="RoundRectangle 14"
                             Padding="14,12"
@@ -263,40 +268,38 @@
                     <Grid ColumnDefinitions="*, Auto, Auto" ColumnSpacing="12" VerticalOptions="Center">
 
                         <Label Grid.Column="0"
-                           Text="Trabajos y Actividades" 
-                           FontSize="18" 
-                           FontAttributes="Bold" 
-                           TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" 
-                           VerticalOptions="Center" />
+                               Text="Trabajos y Actividades" 
+                               FontSize="18" 
+                               FontAttributes="Bold" 
+                               TextColor="{AppThemeBinding Light=#0F172A, Dark=#F8FAFC}" 
+                               VerticalOptions="Center" />
 
                         <Label Grid.Column="1"
-                           Text="📊 Calificaciones"
-                           FontSize="13"
-                           FontAttributes="Bold"
-                           TextColor="#5C93F9"
-                           VerticalOptions="Center">
+                               Text="📊 Calificaciones"
+                               FontSize="13"
+                               FontAttributes="Bold"
+                               TextColor="#5C93F9"
+                               VerticalOptions="Center">
                             <Label.GestureRecognizers>
                                 <TapGestureRecognizer Tapped="OnOpenGradesClicked" />
                             </Label.GestureRecognizers>
                         </Label>
 
-                        <!-- Botón para administrar unidades (Visibilidad controlada en C#) -->
                         <Button x:Name="BtnManageUnits"
-                            Grid.Column="2"
-                            Text="⚙️ Unidades"
-                            FontSize="12"
-                            TextColor="#5EEAD4"
-                            BackgroundColor="Transparent"
-                            Padding="0"
-                            VerticalOptions="Center"
-                            Clicked="OnManageUnitsClicked" />
+                                Grid.Column="2"
+                                Text="⚙️ Unidades"
+                                FontSize="12"
+                                TextColor="#5EEAD4"
+                                BackgroundColor="Transparent"
+                                Padding="0"
+                                VerticalOptions="Center"
+                                Clicked="OnManageUnitsClicked" />
                     </Grid>
 
                     <CollectionView x:Name="CvAssignmentsGrouped"
                                     IsGrouped="True"
                                     SelectionMode="None">
 
-                        <!-- ENCABEZADO DE CADA UNIDAD -->
                         <CollectionView.GroupHeaderTemplate>
                             <DataTemplate>
                                 <Border Margin="0,14,0,8"
@@ -313,7 +316,6 @@
                             </DataTemplate>
                         </CollectionView.GroupHeaderTemplate>
 
-                        <!-- ELEMENTOS DE LA UNIDAD -->
                         <CollectionView.ItemTemplate>
                             <DataTemplate>
                                 <Border Margin="0,4"
@@ -418,9 +420,10 @@
                 </VerticalStackLayout>
             </ScrollView>
 
-            <!-- BOTÓN FLOTANTE MÁS (+) PARA PUBLICAR -->
+            <!-- BOTÓN FLOTANTE MÁS (+) PARA PUBLICAR (SOLO PROFESOR Y SOLO EN NOVEDADES) -->
             <Border HorizontalOptions="End"
                     x:Name="FabAdd"
+                    IsVisible="False"
                     VerticalOptions="End"
                     Margin="0,0,20,20"
                     WidthRequest="56"

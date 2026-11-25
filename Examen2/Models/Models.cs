@@ -67,7 +67,7 @@ namespace Examen2.Data
         public string CourseCode { get; set; }
 
         // Atributos para que los serializadores JSON omitan la propiedad al hacer Insert/Update
-        [JsonIgnore]
+        [Column("display_teacher_name", ignoreOnInsert: true, ignoreOnUpdate: true)]
         public string DisplayTeacherName => !string.IsNullOrWhiteSpace(TeacherName)
             ? TeacherName
             : (!string.IsNullOrWhiteSpace(PrimaryTeacherName) ? PrimaryTeacherName : "Sin Profesor Assig.");
@@ -132,7 +132,7 @@ namespace Examen2.Data
         public string AttachedFilePath { get; set; }
 
         // Atributos para que el serializador JSON no envíe esta propiedad a Supabase
-        [JsonIgnore]
+        [Column("is_task", ignoreOnInsert: true, ignoreOnUpdate: true)]
         public bool IsTask => ItemType == "Tarea";
     }
 
